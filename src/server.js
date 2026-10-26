@@ -72,6 +72,69 @@ app.post("/auth/login", async (req, res) => {
     
 });
 
+
+
+
+
+
+app.post("/admin/distributors", authMiddleware, roleMiddleware("ADMIN"), async (req, res) => {
+  try {
+    const { name, email, password, phone } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        message: "Ad, e-posta ve şifre zorunludur"
+      });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({
+        message: "Şifre en az 8 karakter olmalıdır"
+      });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const existingUser = await pool.query(
+      "SELECT id FROM users WHERE email = $1",
+      [normalizedEmail]
+    );
+
+    if (existingUser.rows.length > 0) {
+      return res.status(409).json({
+        message: "Bu e-posta adresi zaten kayıtlı"
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 12);
+
+    const result = await pool.query(
+      `INSERT INTO users (name, email, password_hash, role, phone)
+       VALUES ($1, $2, $3, 'DRIVER', $4)
+       RETURNING id, name, email, role, phone, active, created_at`,
+      [name.trim(), normalizedEmail, passwordHash, phone || null]
+    );
+
+    return res.status(201).json({
+      message: "Dağıtımcı hesabı oluşturuldu",
+      distributor: result.rows[0]
+    });
+  } catch (error) {
+    if (error.code === "23505") {
+      return res.status(409).json({
+        message: "Bu e-posta adresi zaten kayıtlı"
+      });
+    }
+
+    console.error(error);
+    return res.status(500).json({
+      message: "Sunucu hatası"
+    });
+  }
+});
+
+
+
 app.get("/private", authMiddleware, (req, res) => {
   res.json({
     message: "Gizli alana hoş geldin",
@@ -1638,27 +1701,157 @@ app.post(
 
 
 
+app.post(
+    "/shipments/:id/distributors",
+    authMiddleware,
+    roleMiddleware("ADMIN"),
+    async (req, res) => {
+        const client = await pool.connect();
+
+        try {
+            const shipmentId = Number(req.params.id);
+            const { driver_ids } = req.body;
+
+            if (!Number.isInteger(shipmentId) || shipmentId <= 0) {
+                return res.status(400).json({
+                    message: "Geçersiz sevkiyat numarası"
+                });
+            }
+
+            if (
+                !Array.isArray(driver_ids) ||
+                driver_ids.length === 0 ||
+                !driver_ids.every(
+                    id => Number.isInteger(id) && id > 0
+                )
+            ) {
+                return res.status(400).json({
+                    message: "En az bir geçerli dağıtımcı ID'si gönderilmelidir"
+                });
+            }
+
+            const uniqueDriverIds = [...new Set(driver_ids)];
+
+            await client.query("BEGIN");
+
+            const shipment = await client.query(
+                "SELECT id FROM shipments WHERE id = $1 FOR UPDATE",
+                [shipmentId]
+            );
+
+            if (shipment.rows.length === 0) {
+                await client.query("ROLLBACK");
+
+                return res.status(404).json({
+                    message: "Sevkiyat bulunamadı"
+                });
+            }
+
+            const drivers = await client.query(
+                `SELECT id
+                 FROM users
+                 WHERE id = ANY($1::int[])
+                   AND role = 'DRIVER'
+                   AND active = true`,
+                [uniqueDriverIds]
+            );
+
+            if (drivers.rows.length !== uniqueDriverIds.length) {
+                await client.query("ROLLBACK");
+
+                return res.status(400).json({
+                    message: "Dağıtımcı ID'lerinden biri geçersiz, pasif veya DRIVER rolünde değil"
+                });
+            }
+
+            for (const driverId of uniqueDriverIds) {
+                await client.query(
+                    `INSERT INTO shipment_drivers
+                        (shipment_id, user_id, assigned_by)
+                     VALUES ($1, $2, $3)
+                     ON CONFLICT (shipment_id, user_id)
+                     DO NOTHING`,
+                    [shipmentId, driverId, req.user.id]
+                );
+            }
+
+            const assignments = await client.query(
+                `SELECT
+                    u.id,
+                    u.name,
+                    u.email,
+                    sd.assigned_at,
+                    sd.assigned_by
+                 FROM shipment_drivers sd
+                 JOIN users u ON u.id = sd.user_id
+                 WHERE sd.shipment_id = $1
+                 ORDER BY u.name`,
+                [shipmentId]
+            );
+
+            await client.query("COMMIT");
+
+            return res.status(200).json({
+                message: "Dağıtımcı atamaları kaydedildi",
+                shipment_id: shipmentId,
+                distributors: assignments.rows
+            });
+        } catch (error) {
+            await client.query("ROLLBACK");
+            console.error(error);
+
+            return res.status(500).json({
+                message: "Dağıtımcı ataması yapılamadı"
+            });
+        } finally {
+            client.release();
+        }
+    }
+);
+
+
+
+
 app.get(
     "/shipments",
     authMiddleware,
     async (req, res) => {
         try {
-            const result = await pool.query(
-                `SELECT
-                    shipments.*,
-                    routes.name AS route_name
-                 FROM shipments
-                 INNER JOIN routes
-                    ON shipments.route_id = routes.id
-                 ORDER BY shipments.shipment_date, shipments.id`
-            );
+            let result;
 
-            res.json(result.rows);
+            if (req.user.role === "ADMIN") {
+                result = await pool.query(
+                    `SELECT
+                        s.*,
+                        r.name AS route_name
+                     FROM shipments s
+                     INNER JOIN routes r ON s.route_id = r.id
+                     ORDER BY s.shipment_date, s.id`
+                );
+            } else if (req.user.role === "DRIVER") {
+                result = await pool.query(
+                    `SELECT
+                        s.*,
+                        r.name AS route_name
+                     FROM shipments s
+                     INNER JOIN routes r ON s.route_id = r.id
+                     INNER JOIN shipment_drivers sd
+                        ON sd.shipment_id = s.id
+                     WHERE sd.user_id = $1
+                     ORDER BY s.shipment_date, s.id`,
+                    [req.user.id]
+                );
+            } else {
+                return res.status(403).json({
+                    message: "Sevkiyat listesini görme yetkiniz yok"
+                });
+            }
 
+            return res.json(result.rows);
         } catch (error) {
             console.error(error);
 
-            res.status(500).json({
+            return res.status(500).json({
                 message: "Sevkiyatlar alınamadı"
             });
         }
@@ -2054,6 +2247,179 @@ app.get(
             res.status(500).json({
                 message: "Siparişler alınamadı"
             });
+        }
+    }
+);
+
+
+
+
+
+
+
+
+app.get(
+    "/distributor/shipments/:id/orders",
+    authMiddleware,
+    roleMiddleware("DRIVER"),
+    async (req, res) => {
+        try {
+            const shipmentId = Number(req.params.id);
+
+            if (!Number.isInteger(shipmentId) || shipmentId <= 0) {
+                return res.status(400).json({
+                    message: "Geçersiz sevkiyat numarası"
+                });
+            }
+
+            const result = await pool.query(
+                `SELECT
+                    o.id AS order_id,
+                    o.shipment_id,
+                    o.status,
+                    o.total_amount,
+                    o.created_at,
+                    c.company_name,
+                    c.address,
+                    c.phone
+                 FROM orders o
+                 INNER JOIN customers c
+                    ON c.id = o.customer_id
+                 INNER JOIN shipment_drivers sd
+                    ON sd.shipment_id = o.shipment_id
+                 WHERE o.shipment_id = $1
+                   AND sd.user_id = $2
+                 ORDER BY o.id`,
+                [shipmentId, req.user.id]
+            );
+
+            return res.json(result.rows);
+        } catch (error) {
+            console.error(error);
+
+            return res.status(500).json({
+                message: "Sevkiyat siparişleri alınamadı"
+            });
+        }
+    }
+);
+
+
+
+app.patch(
+    "/distributor/orders/:id/deliver",
+    authMiddleware,
+    roleMiddleware("DRIVER"),
+    async (req, res) => {
+        const client = await pool.connect();
+        let transactionStarted = false;
+
+        try {
+            const orderId = Number(req.params.id);
+
+            if (!Number.isInteger(orderId) || orderId <= 0) {
+                return res.status(400).json({
+                    message: "Geçersiz sipariş numarası"
+                });
+            }
+
+            await client.query("BEGIN");
+            transactionStarted = true;
+
+            // Siparişin bu dağıtıcıya atanmış bir sevkiyatta
+            // bulunduğunu doğrula ve siparişi kilitle.
+            const orderResult = await client.query(
+                `SELECT
+                    o.id,
+                    o.customer_id,
+                    o.shipment_id,
+                    o.total_amount,
+                    o.status
+                 FROM orders o
+                 INNER JOIN shipment_drivers sd
+                    ON sd.shipment_id = o.shipment_id
+                 WHERE o.id = $1
+                   AND sd.user_id = $2
+                 FOR UPDATE OF o`,
+                [orderId, req.user.id]
+            );
+
+            if (orderResult.rows.length === 0) {
+                await client.query("ROLLBACK");
+                transactionStarted = false;
+
+                return res.status(404).json({
+                    message: "Sipariş bulunamadı veya bu sevkiyata atanmadınız"
+                });
+            }
+
+            const order = orderResult.rows[0];
+
+            if (order.status !== "ON_THE_WAY") {
+                await client.query("ROLLBACK");
+                transactionStarted = false;
+
+                return res.status(400).json({
+                    message: "Yalnızca teslimata çıkmış siparişler teslim edildi olarak işaretlenebilir",
+                    current_status: order.status
+                });
+            }
+
+            // Cari hesap borcu ve sipariş durumu aynı
+            // transaction içinde güncellenir.
+            await client.query(
+                `INSERT INTO current_account_transactions
+                    (customer_id, order_id, transaction_type,
+                     amount, description, created_by)
+                 VALUES ($1, $2, 'DEBIT', $3, $4, $5)`,
+                [
+                    order.customer_id,
+                    orderId,
+                    order.total_amount,
+                    `Teslim edilen sipariş #${orderId}`,
+                    req.user.id
+                ]
+            );
+
+            const updateResult = await client.query(
+                `UPDATE orders
+                 SET status = 'DELIVERED',
+                     updated_at = now()
+                 WHERE id = $1
+                   AND status = 'ON_THE_WAY'
+                 RETURNING *`,
+                [orderId]
+            );
+
+            if (updateResult.rows.length === 0) {
+                throw new Error("Sipariş durumu güncellenemedi");
+            }
+
+            await client.query("COMMIT");
+            transactionStarted = false;
+
+            return res.json({
+                message: "Sipariş teslim edildi olarak kaydedildi",
+                order: updateResult.rows[0]
+            });
+        } catch (error) {
+            if (transactionStarted) {
+                await client.query("ROLLBACK");
+            }
+
+            if (error.code === "23505") {
+                return res.status(409).json({
+                    message: "Bu sipariş için daha önce cari hesap borcu kaydedilmiş"
+                });
+            }
+
+            console.error(error);
+
+            return res.status(500).json({
+                message: "Teslimat onaylanamadı"
+            });
+        } finally {
+            client.release();
         }
     }
 );
