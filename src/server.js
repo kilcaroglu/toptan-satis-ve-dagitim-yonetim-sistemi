@@ -11,8 +11,9 @@ import ordersRoutes from "./routes/orders.routes.js";
 import myOrdersRoutes from "./routes/my-orders.routes.js";
 import distributorOrdersRoutes from "./routes/distributor-orders.routes.js";
 import customersRoutes from "./routes/customers.routes.js";
-import membershipApplicationsRoutes from "./routes/membership-applications.routes.js";
-import routesRoutes from "./routes/routes.routes.js";
+import membershipApplicationsRoutes, {
+  adminMembershipApplicationsRoutes
+} from "./routes/membership-applications.routes.js";import routesRoutes from "./routes/routes.routes.js";
 import shipmentsRoutes from "./routes/shipments.routes.js";
 import districtsRoutes from "./routes/districts.routes.js";
 import currentAccountRoutes from "./routes/current-account.routes.js";
@@ -31,7 +32,7 @@ app.use("/my-orders", myOrdersRoutes);
 app.use("/distributor", distributorOrdersRoutes);
 app.use("/customers", customersRoutes);
 app.use("/membership-applications", membershipApplicationsRoutes);
-app.use("/admin/membership-applications", membershipApplicationsRoutes);
+app.use("/admin/membership-applications", adminMembershipApplicationsRoutes);
 app.use("/routes", routesRoutes);
 app.use("/shipments", shipmentsRoutes);
 app.use("/districts", districtsRoutes);

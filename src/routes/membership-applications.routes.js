@@ -9,6 +9,7 @@ import {
 } from "../authMiddleware.js";
 
 const router = express.Router();
+const adminRouter = express.Router();
 
 // Yeni üyelik başvurusu
 router.post("/", async (req, res) => {
@@ -160,7 +161,7 @@ router.get("/:application_number", async (req, res) => {
 });
 
 // Yönetici: başvuruları listele ve filtrele
-router.get(
+adminRouter.get(
   "/",
   authMiddleware,
   roleMiddleware("ADMIN"),
@@ -237,7 +238,7 @@ router.get(
 );
 
 // Yönetici: başvuruyu okundu olarak işaretle
-router.patch(
+adminRouter.patch(
   "/:id/read",
   authMiddleware,
   roleMiddleware("ADMIN"),
@@ -276,7 +277,7 @@ router.patch(
 );
 
 // Yönetici: başvuruyu onayla ve müşteri hesabını oluştur
-router.patch(
+adminRouter.patch(
   "/:id/approve",
   authMiddleware,
   roleMiddleware("ADMIN"),
@@ -412,7 +413,7 @@ router.patch(
 );
 
 // Yönetici: başvuruyu reddet
-router.patch(
+adminRouter.patch(
   "/:id/reject",
   authMiddleware,
   roleMiddleware("ADMIN"),
@@ -478,4 +479,5 @@ router.patch(
   }
 );
 
+export { adminRouter as adminMembershipApplicationsRoutes };
 export default router;
