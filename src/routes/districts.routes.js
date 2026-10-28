@@ -5,6 +5,23 @@ import { authMiddleware, roleMiddleware } from "../authMiddleware.js";
 
 const router = express.Router();
 
+router.get("/", async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, name, active, delivery_available
+       FROM districts
+       ORDER BY name ASC`
+    );
+
+    return res.json({ districts: result.rows });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "İlçeler listelenemedi."
+    });
+  }
+});
+
 router.patch(
   "/:id/delivery",
   authMiddleware,

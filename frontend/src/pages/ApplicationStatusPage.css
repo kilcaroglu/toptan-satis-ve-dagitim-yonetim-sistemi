@@ -1,0 +1,97 @@
+
+.status-page {
+  min-height: 100vh;
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(135deg, #071426, #142c4b);
+  color: #172033;
+}
+
+.status-heading {
+  margin: 10px 0 28px;
+  color: white;
+  text-align: center;
+}
+
+.status-heading h1 {
+  margin: 0 0 8px;
+  letter-spacing: 3px;
+}
+
+.status-heading p {
+  margin: 0;
+}
+
+.status-card {
+  width: 100%;
+  max-width: 560px;
+  padding: 32px;
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0 16px 40px #0003;
+}
+
+.status-card h2 {
+  margin-top: 0;
+}
+
+.status-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.status-card input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
+.status-card button {
+  padding: 12px 16px;
+  border: 0;
+  border-radius: 6px;
+  background: #173b68;
+  color: white;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.status-card button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.status-result {
+  margin-top: 24px;
+  padding: 18px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #f8fafc;
+  line-height: 1.6;
+}
+
+.status-result h3 {
+  margin-top: 0;
+}
+
+.status-error {
+  margin-top: 16px;
+  color: #b91c1c;
+}
+
+.status-card .status-back {
+  margin-top: 18px;
+  background: #64748b;
+}
+
+@media (max-width: 480px) {
+  .status-card {
+    padding: 22px;
+  }
+}

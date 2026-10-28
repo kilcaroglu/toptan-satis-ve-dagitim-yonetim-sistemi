@@ -5,3 +5,5 @@ node_modules/
 npm-debug.log*
 test.http
 src/password.js
+frontend/dist/
+test_1.http

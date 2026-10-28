@@ -1,0 +1,275 @@
+
+.application-page {
+  min-height: 100vh;
+  width: 100%;
+  padding: 35px 20px 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(135deg, #0a2858, #061632);
+  color: #ffffff;
+}
+
+.application-heading {
+  margin-bottom: 25px;
+  text-align: center;
+}
+
+.application-heading h1 {
+  margin: 0 0 8px;
+  font-size: clamp(30px, 4vw, 44px);
+  letter-spacing: 2px;
+}
+
+.application-heading p {
+  margin: 0;
+  color: #f1f5fb;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.application-card {
+  width: 100%;
+  max-width: 650px;
+  padding: 30px;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #10264b;
+  box-shadow: 0 15px 45px #00000030;
+}
+
+.application-card h2 {
+  margin: 0;
+  text-align: center;
+  font-size: 27px;
+}
+
+.application-description {
+  margin: 10px 0 25px;
+  text-align: center;
+  color: #52627a;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.application-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 16px;
+}
+
+.application-field {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.application-field-full {
+  grid-column: 1 / -1;
+}
+
+.application-field label {
+  margin-bottom: 7px;
+  color: #243752;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.application-field input,
+.application-field select,
+.application-field textarea {
+  width: 100%;
+  min-height: 45px;
+  padding: 11px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #172b49;
+  font: inherit;
+  font-size: 14px;
+}
+
+.application-field textarea {
+  resize: vertical;
+}
+
+.application-field input::placeholder,
+.application-field textarea::placeholder {
+  color: #78869a;
+  opacity: 1;
+}
+
+.application-field input:focus,
+.application-field select:focus,
+.application-field textarea:focus {
+  outline: 2px solid #245ba4;
+  outline-offset: 1px;
+  border-color: #245ba4;
+}
+
+.application-field small {
+  margin-top: 6px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.application-submit {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 24px;
+  border: none;
+  border-radius: 6px;
+  background: #0b3474;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.application-submit:hover {
+  background: #164b91;
+}
+
+.application-back {
+  display: block;
+  margin: 14px auto 0;
+  padding: 10px;
+  border: none;
+  background: transparent;
+  color: #0b3474;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.application-back:hover {
+  text-decoration: underline;
+}
+
+.application-footer {
+  margin-top: auto;
+  padding-top: 25px;
+  color: #d2deef;
+  font-size: 12px;
+}
+
+@media (max-width: 560px) {
+  .application-page {
+    padding: 30px 14px 20px;
+  }
+
+  .application-card {
+    padding: 24px 19px;
+  }
+
+  .application-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .application-field-full {
+    grid-column: auto;
+  }
+}
+
+
+.application-success,
+.application-error {
+  margin: 0 0 18px;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.application-success {
+  border: 1px solid #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.application-success p {
+  margin: 0;
+}
+
+.application-success p + p {
+  margin-top: 6px;
+}
+
+.application-error {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.application-submit:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+
+.popup-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(3, 12, 27, 0.72);
+}
+
+.success-popup {
+  width: 100%;
+  max-width: 440px;
+  padding: 30px;
+  border-radius: 14px;
+  background: #fff;
+  color: #172033;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: popup-appear 0.2s ease-out;
+}
+
+.success-popup h2 {
+  margin-top: 0;
+  color: #173b68;
+}
+
+.success-popup p {
+  line-height: 1.6;
+}
+
+.popup-application-number {
+  padding: 12px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  overflow-wrap: anywhere;
+}
+
+.success-popup button {
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 7px;
+  background: #173b68;
+  color: #fff;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.success-popup button.popup-close {
+  background: #e2e8f0;
+  color: #172033;
+}
+
+@keyframes popup-appear {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
