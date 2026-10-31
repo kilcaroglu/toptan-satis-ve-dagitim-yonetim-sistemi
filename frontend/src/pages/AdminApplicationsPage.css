@@ -1,0 +1,353 @@
+.applications-page {
+  width: 100%;
+  color: #243044;
+}
+
+.applications-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.applications-heading h1 {
+  margin: 0 0 8px;
+  font-size: 26px;
+}
+
+.applications-heading p {
+  margin: 0;
+  color: #718096;
+}
+
+.applications-refresh,
+.secondary-button,
+.approve-button,
+.reject-button {
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.applications-refresh,
+.secondary-button {
+  background: #e9eef5;
+  color: #334155;
+}
+
+.applications-refresh:disabled,
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.application-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.application-stat {
+  background: #fff;
+  border: 1px solid #e5eaf0;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.application-stat span,
+.application-details span {
+  display: block;
+  color: #718096;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.application-stat strong {
+  font-size: 27px;
+}
+
+.applications-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.applications-toolbar label {
+  font-weight: 600;
+}
+
+.applications-toolbar select,
+.application-modal input,
+.application-modal textarea {
+  width: 100%;
+  max-width: 280px;
+  border: 1px solid #d8dee8;
+  border-radius: 8px;
+  padding: 11px;
+  background: #fff;
+  color: #243044;
+  font: inherit;
+}
+
+.applications-list {
+  display: grid;
+  gap: 14px;
+}
+
+.application-card {
+  background: #fff;
+  border: 1px solid #e5eaf0;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.application-card.unread {
+  border-left: 4px solid #e7a33e;
+}
+
+.application-card-top,
+.application-card-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.application-number {
+  color: #718096;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.application-card h3 {
+  margin: 7px 0 4px;
+}
+
+.application-card-top p {
+  margin: 0;
+  color: #718096;
+}
+
+.application-status {
+  padding: 7px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  background: #edf0f5;
+  color: #475569;
+}
+
+.status-pending {
+  background: #fff3d9;
+  color: #9a6700;
+}
+
+.status-approved {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-rejected {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.status-waiting_for_delivery {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.application-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  border-top: 1px solid #edf0f5;
+  border-bottom: 1px solid #edf0f5;
+  padding: 18px 0;
+  margin: 18px 0;
+}
+
+.application-details strong {
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.application-card-bottom {
+  align-items: center;
+}
+
+.read-label,
+.unread-label {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.read-label {
+  color: #64748b;
+}
+
+.unread-label {
+  color: #b7791f;
+}
+
+.application-actions,
+.modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.approve-button {
+  background: #16834a;
+  color: white;
+}
+
+.reject-button {
+  background: #c83d3d;
+  color: white;
+}
+
+.applications-empty,
+.applications-error {
+  background: #fff;
+  border-radius: 10px;
+  padding: 22px;
+  text-align: center;
+  color: #64748b;
+}
+
+.applications-error {
+  color: #b42318;
+  background: #fff0ef;
+  margin-bottom: 16px;
+}
+
+.application-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.6);
+}
+
+.application-modal {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 28px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.application-modal h2 {
+  margin-top: 0;
+}
+
+.application-modal p {
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.application-modal label {
+  display: block;
+  font-weight: 600;
+  margin: 18px 0 8px;
+}
+
+.application-modal input,
+.application-modal textarea {
+  max-width: none;
+  box-sizing: border-box;
+}
+
+.application-modal small {
+  display: block;
+  margin-top: 8px;
+  color: #718096;
+  line-height: 1.5;
+}
+
+.modal-close {
+  position: absolute;
+  right: 16px;
+  top: 12px;
+  border: 0;
+  background: transparent;
+  font-size: 28px;
+  cursor: pointer;
+}
+
+.modal-actions {
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+@media (max-width: 650px) {
+  .applications-heading {
+    align-items: flex-start;
+  }
+
+  .applications-heading h1 {
+    font-size: 21px;
+  }
+
+  .application-stats {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .application-stat {
+    padding: 14px;
+  }
+
+  .application-stat strong {
+    font-size: 22px;
+  }
+
+  .applications-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .applications-toolbar select {
+    max-width: none;
+  }
+
+  .application-card {
+    padding: 15px;
+  }
+
+  .application-card-top,
+  .application-card-bottom {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .application-details {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .application-actions {
+    width: 100%;
+  }
+
+  .application-actions button {
+    flex: 1;
+  }
+
+  .application-modal {
+    padding: 22px;
+  }
+}

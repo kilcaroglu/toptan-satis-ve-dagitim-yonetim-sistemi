@@ -12,16 +12,62 @@ const router = express.Router();
 router.get("/", authMiddleware, async (req, res) => {
     try {
         const result = await pool.query(
-            `SELECT customers.*, districts.name AS district_name
-             FROM customers
-             LEFT JOIN districts
+            `SELECT
+                customers.*,
+                districts.name AS district_name,
+
+                COALESCE(
+                    SUM(
+                        CASE
+                            WHEN transactions.transaction_type = 'DEBIT'
+                                THEN transactions.amount
+                            WHEN transactions.transaction_type = 'PAYMENT'
+                                THEN -transactions.amount
+                            ELSE 0
+                        END
+                    ),
+                    0
+                ) AS balance,
+
+                COALESCE(
+                    SUM(
+                        CASE
+                            WHEN transactions.transaction_type = 'DEBIT'
+                                THEN transactions.amount
+                            ELSE 0
+                        END
+                    ),
+                    0
+                ) AS total_debit,
+
+                COALESCE(
+                    SUM(
+                        CASE
+                            WHEN transactions.transaction_type = 'PAYMENT'
+                                THEN transactions.amount
+                            ELSE 0
+                        END
+                    ),
+                    0
+                ) AS total_payment
+
+            FROM customers
+
+            LEFT JOIN districts
                 ON customers.district_id = districts.id
-             ORDER BY customers.id`
+
+            LEFT JOIN current_account_transactions transactions
+                ON transactions.customer_id = customers.id
+
+            GROUP BY customers.id, districts.name
+
+            ORDER BY customers.id`
         );
 
         return res.json(result.rows);
     } catch (error) {
         console.error(error);
+
         return res.status(500).json({
             message: "Müşteriler alınamadı"
         });

@@ -1,0 +1,672 @@
+
+.customers-page {
+  width: 100%;
+  color: #1f2937;
+}
+
+.customers-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.customers-heading h2 {
+  margin: 0 0 6px;
+  font-size: 25px;
+  font-weight: 700;
+}
+
+.customers-heading p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.customers-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.customers-primary-button,
+.customers-refresh-button,
+.customer-secondary-button,
+.customer-edit-button,
+.customer-detail-button,
+.customer-debit-button,
+.customer-payment-button {
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 15px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.customers-primary-button {
+  color: #fff;
+  background: #2563eb;
+}
+
+.customers-primary-button:hover {
+  background: #1d4ed8;
+}
+
+.customers-refresh-button,
+.customer-secondary-button {
+  color: #374151;
+  background: #f3f4f6;
+}
+
+.customers-refresh-button:hover,
+.customer-secondary-button:hover {
+  background: #e5e7eb;
+}
+
+.customers-refresh-button:disabled,
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.customers-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 15px;
+  margin-bottom: 22px;
+}
+
+.customer-summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+}
+
+.customer-summary-card span {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.customer-summary-card strong {
+  color: #111827;
+  font-size: 21px;
+  font-weight: 700;
+}
+
+.customers-toolbar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.customers-toolbar input,
+.customers-toolbar select {
+  min-height: 42px;
+  padding: 10px 13px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  outline: none;
+  background: #fff;
+  color: #374151;
+  font-size: 13px;
+}
+
+.customers-toolbar input {
+  flex: 1;
+  min-width: 150px;
+}
+
+.customers-toolbar select {
+  min-width: 180px;
+}
+
+.customers-toolbar input:focus,
+.customers-toolbar select:focus,
+.customer-modal input:focus,
+.customer-modal select:focus,
+.customer-modal textarea:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.customers-table-wrapper,
+.customer-transactions-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.customers-table,
+.customer-transactions-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.customers-table {
+  min-width: 1050px;
+}
+
+.customers-table th,
+.customer-transactions-table th {
+  padding: 14px 13px;
+  color: #6b7280;
+  background: #f9fafb;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.customers-table td,
+.customer-transactions-table td {
+  padding: 14px 13px;
+  border-top: 1px solid #f0f1f3;
+  color: #374151;
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+.customers-table tbody tr:hover,
+.customer-transactions-table tbody tr:hover {
+  background: #fafafa;
+}
+
+.customers-table td:first-child strong {
+  display: block;
+  color: #111827;
+  font-size: 13px;
+}
+
+.customers-table td:first-child small {
+  display: block;
+  margin-top: 4px;
+  color: #9ca3af;
+  font-size: 11px;
+}
+
+.customer-balance-cell strong {
+  color: #111827;
+  white-space: nowrap;
+}
+
+.customer-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.customer-status.active {
+  color: #15803d;
+  background: #dcfce7;
+}
+
+.customer-status.passive {
+  color: #6b7280;
+  background: #f3f4f6;
+}
+
+.customer-row-actions {
+  display: flex;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.customer-detail-button {
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+
+.customer-detail-button:hover {
+  background: #dbeafe;
+}
+
+.customer-edit-button {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.customer-edit-button:hover {
+  background: #fde68a;
+}
+
+.customer-debit-button {
+  color: #fff;
+  background: #dc2626;
+}
+
+.customer-debit-button:hover {
+  background: #b91c1c;
+}
+
+.customer-payment-button {
+  color: #fff;
+  background: #15803d;
+}
+
+.customer-payment-button:hover {
+  background: #166534;
+}
+
+.customers-empty {
+  padding: 35px 20px;
+  border: 1px dashed #d1d5db;
+  border-radius: 10px;
+  color: #6b7280;
+  background: #fff;
+  text-align: center;
+  font-size: 14px;
+}
+
+.customers-error {
+  margin: 12px 0;
+  padding: 11px 14px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #b91c1c;
+  background: #fef2f2;
+  font-size: 13px;
+}
+
+/* Modal pencereleri */
+
+.customer-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow-y: auto;
+  background: rgba(15, 23, 42, 0.58);
+}
+
+.customer-modal {
+  position: relative;
+  width: 100%;
+  max-width: 620px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  padding: 28px;
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.customer-modal h2 {
+  margin: 0 35px 22px 0;
+  color: #111827;
+  font-size: 21px;
+}
+
+.customer-modal-close {
+  position: absolute;
+  top: 15px;
+  right: 18px;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 7px;
+  color: #6b7280;
+  background: #f3f4f6;
+  font-size: 25px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.customer-modal-close:hover {
+  color: #111827;
+  background: #e5e7eb;
+}
+
+.customer-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.customer-modal label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-bottom: 15px;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.customer-modal input,
+.customer-modal select,
+.customer-modal textarea {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  outline: none;
+  color: #111827;
+  background: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.customer-modal textarea {
+  resize: vertical;
+}
+
+.customer-full-width {
+  grid-column: 1 / -1;
+}
+
+.customer-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 22px;
+  padding-top: 17px;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* Müşteri detay penceresi */
+
+.customer-detail-modal {
+  max-width: 1050px;
+}
+
+.customer-detail-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 15px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.customer-detail-heading h2 {
+  margin: 7px 0;
+  font-size: 23px;
+}
+
+.customer-detail-heading p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.customer-detail-eyebrow {
+  color: #2563eb;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.customer-detail-info {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 17px;
+  padding: 20px 0;
+}
+
+.customer-detail-info div {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.customer-detail-info span,
+.customer-account-summary span {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.customer-detail-info strong {
+  color: #111827;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.customer-detail-info .customer-address-info {
+  grid-column: 1 / -1;
+}
+
+.customer-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  padding: 17px 0;
+  border-top: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.customer-section-title {
+  margin: 21px 0 13px;
+  color: #111827;
+  font-size: 16px;
+}
+
+.customer-account-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.customer-account-summary div {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 17px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fafafa;
+}
+
+.customer-account-summary strong {
+  color: #111827;
+  font-size: 17px;
+}
+
+.customer-history-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.customer-history-heading .customer-section-title {
+  margin: 0 0 13px;
+}
+
+.customer-history-heading > span {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.customer-transactions-table {
+  min-width: 650px;
+}
+
+.transaction-type {
+  display: inline-block;
+  padding: 5px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.transaction-type.debit {
+  color: #b91c1c;
+  background: #fee2e2;
+}
+
+.transaction-type.payment {
+  color: #15803d;
+  background: #dcfce7;
+}
+
+.transaction-debit-amount {
+  color: #b91c1c !important;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.transaction-payment-amount {
+  color: #15803d !important;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Borç ve tahsilat penceresi */
+
+.customer-transaction-modal {
+  max-width: 470px;
+}
+
+.customer-transaction-customer {
+  margin: -12px 0 18px;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.customer-current-balance {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 14px;
+  border-radius: 9px;
+  background: #f3f4f6;
+}
+
+.customer-current-balance span {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.customer-current-balance strong {
+  color: #111827;
+  font-size: 15px;
+}
+
+/* Mobil uyumluluk */
+
+@media (max-width: 1000px) {
+  .customers-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .customer-detail-info {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 650px) {
+  .customers-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .customers-heading-actions {
+    width: 100%;
+  }
+
+  .customers-heading-actions button {
+    flex: 1;
+  }
+
+  .customers-summary {
+    grid-template-columns: 1fr 1fr;
+    gap: 9px;
+  }
+
+  .customer-summary-card {
+    padding: 14px;
+  }
+
+  .customer-summary-card strong {
+    font-size: 16px;
+  }
+
+  .customers-toolbar {
+    flex-direction: column;
+  }
+
+  .customers-toolbar select {
+    width: 100%;
+  }
+
+  .customer-modal-backdrop {
+    align-items: flex-start;
+    padding: 10px;
+  }
+
+  .customer-modal {
+    margin: auto 0;
+    padding: 20px;
+  }
+
+  .customer-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .customer-full-width {
+    grid-column: auto;
+  }
+
+  .customer-detail-info {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .customer-account-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .customer-detail-actions button {
+    flex: 1 1 40%;
+  }
+}
+
+/* Müşteri künyesi başlık ve kapatma butonu düzeni */
+
+.customer-detail-modal {
+  padding-top: 55px;
+}
+
+.customer-detail-modal > .customer-modal-close {
+  z-index: 5;
+  top: 12px;
+  right: 12px;
+}
+
+.customer-detail-heading {
+  padding-right: 45px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.customer-detail-heading > div {
+  min-width: 0;
+  flex: 1;
+}
+
+.customer-detail-heading > .customer-status {
+  flex-shrink: 0;
+  margin-right: 5px;
+}

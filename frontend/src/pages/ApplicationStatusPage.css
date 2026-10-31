@@ -95,3 +95,24 @@
     padding: 22px;
   }
 }
+
+.admin-note {
+  margin-top: 20px;
+  padding: 16px;
+  background: #fff7e8;
+  border: 1px solid #f0d6a8;
+  border-left: 4px solid #d99a35;
+  border-radius: 8px;
+}
+
+.admin-note h4 {
+  margin: 0 0 8px;
+  color: #80520c;
+}
+
+.admin-note p {
+  margin: 0;
+  color: #594522;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}

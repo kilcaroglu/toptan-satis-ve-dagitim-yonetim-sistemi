@@ -319,4 +319,105 @@ router.get(
   },
 );
 
+// Manuel cari borç ekleme (Yalnızca ADMIN)
+router.post(
+  "/:id/debits",
+  authMiddleware,
+  roleMiddleware("ADMIN"),
+  async (req, res) => {
+    const client = await pool.connect();
+
+    try {
+      const customerId = Number(req.params.id);
+      const amount = Number(req.body.amount);
+      const description =
+        typeof req.body.description === "string"
+          ? req.body.description.trim()
+          : "";
+
+      if (
+        !Number.isInteger(customerId) ||
+        customerId <= 0 ||
+        !Number.isFinite(amount) ||
+        amount <= 0 ||
+        amount > 9999999999.99 ||
+        !description
+      ) {
+        return res.status(400).json({
+          message: "Müşteri, borç tutarı veya açıklama geçersiz.",
+        });
+      }
+
+      await client.query("BEGIN");
+
+      const customerResult = await client.query(
+        `SELECT id
+         FROM customers
+         WHERE id = $1
+         FOR UPDATE`,
+        [customerId]
+      );
+
+      if (customerResult.rows.length === 0) {
+        await client.query("ROLLBACK");
+
+        return res.status(404).json({
+          message: "Müşteri bulunamadı.",
+        });
+      }
+
+      const debitResult = await client.query(
+        `INSERT INTO current_account_transactions (
+          customer_id,
+          transaction_type,
+          amount,
+          description,
+          created_by
+        )
+        VALUES ($1, 'DEBIT', $2, $3, $4)
+        RETURNING *`,
+        [
+          customerId,
+          amount,
+          description,
+          req.user.id,
+        ]
+      );
+
+      const balanceResult = await client.query(
+        `SELECT COALESCE(
+          SUM(
+            CASE
+              WHEN transaction_type = 'DEBIT' THEN amount
+              WHEN transaction_type = 'PAYMENT' THEN -amount
+              ELSE 0
+            END
+          ),
+          0
+        ) AS balance
+        FROM current_account_transactions
+        WHERE customer_id = $1`,
+        [customerId]
+      );
+
+      await client.query("COMMIT");
+
+      return res.status(201).json({
+        message: "Manuel borç başarıyla kaydedildi.",
+        debit: debitResult.rows[0],
+        balance: Number(balanceResult.rows[0].balance),
+      });
+    } catch (error) {
+      await client.query("ROLLBACK");
+      console.error(error);
+
+      return res.status(500).json({
+        message: "Manuel borç kaydedilemedi.",
+      });
+    } finally {
+      client.release();
+    }
+  }
+);
+
 export default router;

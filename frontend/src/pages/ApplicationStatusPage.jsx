@@ -40,18 +40,24 @@ function ApplicationStatusPage({ initialNumber = "", onBack }) {
   }
 
   const status = application?.status;
+  const adminNote = application?.admin_note?.trim();
 
   let statusExplanation = "";
+
   if (status === "PENDING") {
     statusExplanation =
       "Başvurunuz alındı. Başvurunuz değerlendirme sürecindedir.";
   } else if (status === "WAITING_FOR_DELIVERY") {
     statusExplanation =
       "Şu anda seçtiğiniz ilçeye sevkiyat yapamıyoruz. İlçenizde sevkiyat hizmetimiz başladığında başvurunuz değerlendirmeye alınacaktır.";
-  } else if (status) {
+  } else if (status === "REJECTED") {
     statusExplanation =
       application?.message ||
-      "Başvurunuzun güncel durumunu aşağıda görebilirsiniz.";
+      "Başvurunuz maalesef reddelmiştir.";
+  }else if (status === "APPROVED") {
+    statusExplanation =
+      application?.message ||
+      "Başvurunuz kabul edilmiştir. ŞİFRE ve SİSTEME GİRİŞ için sizinle iletişime geçeceğiz.";
   }
 
   return (
@@ -74,26 +80,47 @@ function ApplicationStatusPage({ initialNumber = "", onBack }) {
             placeholder="Başvuru numaranızı girin"
             required
           />
+
           <button type="submit" disabled={loading}>
             {loading ? "Kontrol ediliyor..." : "Başvuruyu Kontrol Et"}
           </button>
         </form>
 
-        {error && <p className="status-error" role="alert">{error}</p>}
+        {error && (
+          <p className="status-error" role="alert">
+            {error}
+          </p>
+        )}
 
         {application && (
           <div className="status-result" role="status">
             <h3>Başvuru Bilgileri</h3>
+
             <p>
               <strong>Başvuru numarası:</strong>{" "}
               {application.application_number || applicationNumber}
             </p>
+
             {application.status && (
               <p>
-                <strong>Durum:</strong> {application.status}
+                <strong>Durum:</strong>{" "}
+                {{
+                  PENDING: "ONAY İÇİN İNCELENİYOR",
+                  WAITING_FOR_DELIVERY: "BU İLÇEYLE ŞUAN ÇALIŞAMIYORUZ",
+                  APPROVED: "ONAYLANDI",
+                  REJECTED: "REDDEDİLDİ",
+                }[application.status] || application.status}
               </p>
             )}
+
             <p>{statusExplanation}</p>
+
+            {adminNote && (
+              <div className="admin-note">
+                <h4>Yönetici Notu</h4>
+                <p>{adminNote}</p>
+              </div>
+            )}
           </div>
         )}
 
