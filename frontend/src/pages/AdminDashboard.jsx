@@ -1,8 +1,12 @@
 import { useState } from "react";
 import "./AdminDashboard.css";
+
 import AdminApplicationsPage from "./AdminApplicationsPage.jsx";
 import AdminProductsPage from "./AdminProductsPage.jsx";
 import AdminCustomersPage from "./AdminCustomersPage.jsx";
+import AdminShipmentsPage from "./AdminShipmentsPage.jsx";
+import AdminRoutesPage from "./AdminRoutesPage.jsx";
+import AdminFleetPage from "./AdminFleetPage.jsx";
 
 const menuGroups = [
   {
@@ -11,26 +15,22 @@ const menuGroups = [
   },
   {
     title: "ÜRÜN VE STOK",
-    items: [
-      { id: "products", label: "Ürün Ekle / Yönet", icon: "▣" },
-    ],
+    items: [{ id: "products", label: "Ürün ve Stok Yönetimi", icon: "▣" }],
   },
   {
     title: "MÜŞTERİ VE SİPARİŞ",
     items: [
       { id: "applications", label: "Müşteri Başvuruları", icon: "♧" },
       { id: "customers", label: "Müşteri Hesapları", icon: "₺" },
-      { id: "orders", label: "Siparişler", icon: "▧" },
+      { id: "orders", label: "Sipariş Yönetimi", icon: "▧" },
     ],
   },
   {
-    title: "DAĞITIM VE SEVKİYAT",
+    title: "DAĞITIM VE LOJİSTİK",
     items: [
-      { id: "plan", label: "Sevkiyat Planla", icon: "⇢" },
-      { id: "shipments", label: "Sevkiyatlar", icon: "▰" },
-      { id: "distributors", label: "Distribütörler", icon: "♙" },
-      { id: "routes", label: "Dağıtım Rotaları", icon: "⌖" },
-      { id: "districts", label: "İlçe ve Sevkiyat Bölgeleri", icon: "◎" },
+      { id: "shipments", label: "Sevkiyat Yönetimi", icon: "▰" },
+      { id: "routes", label: "Rota ve Bölgeler", icon: "⌖" },
+      { id: "fleet", label: "Araç ve Personel", icon: "♙" },
     ],
   },
 ];
@@ -41,12 +41,14 @@ const pageInfo = {
     description: "İşletmenizin genel durumunu buradan takip edebilirsiniz.",
   },
   products: {
-    title: "Ürün Ekle / Yönet",
-    description: "Ürünleri ekleme, düzenleme ve yönetme alanı.",
+    title: "Ürün ve Stok Yönetimi",
+    description:
+      "Ürünleri, kategorileri, alışları ve stok durumlarını yönetin.",
   },
   applications: {
     title: "Müşteri Başvuruları",
-    description: "Yeni müşteri üyelik başvurularını inceleyin.",
+    description:
+      "Yeni müşteri üyelik başvurularını inceleyin ve sonuçlandırın.",
   },
   customers: {
     title: "Müşteri Hesapları",
@@ -54,28 +56,24 @@ const pageInfo = {
       "Müşteri bilgileri, cari bakiyeler, borçlar ve tahsilat işlemleri.",
   },
   orders: {
-    title: "Siparişler",
-    description: "Müşteri siparişlerini görüntüleyin ve takip edin.",
-  },
-  plan: {
-    title: "Sevkiyat Planla",
-    description: "Siparişler için sevkiyat planı oluşturun.",
+    title: "Sipariş Yönetimi",
+    description:
+      "Müşteri siparişlerini inceleyin, düzenleyin ve sipariş durumlarını takip edin.",
   },
   shipments: {
-    title: "Sevkiyatlar",
-    description: "Hazırlanan ve tamamlanan sevkiyatları takip edin.",
-  },
-  distributors: {
-    title: "Distribütörler",
-    description: "Distribütör bilgilerini ve sorumluluk alanlarını yönetin.",
+    title: "Sevkiyat Yönetimi",
+    description:
+      "Sevkiyatları planlayın, araç ve personel atayın, teslimat süreçlerini takip edin.",
   },
   routes: {
-    title: "Dağıtım Rotaları",
-    description: "Dağıtım rotalarını ve teslimat sıralarını düzenleyin.",
+    title: "Rota ve Bölgeler",
+    description:
+      "Dağıtım rotalarını, ilçeleri, teslimat günlerini ve sipariş son tarihlerini yönetin.",
   },
-  districts: {
-    title: "İlçe ve Sevkiyat Bölgeleri",
-    description: "İlçeleri ve teslimat yapılabilen bölgeleri yönetin.",
+  fleet: {
+    title: "Araç ve Personel",
+    description:
+      "Araçları, şoförleri ve dağıtım personelini tek yerden yönetin.",
   },
 };
 
@@ -91,6 +89,10 @@ export default function AdminDashboard({ session, onLogout }) {
     setMobileMenuOpen(false);
   }
 
+  const allMenuItems = menuGroups
+    .flatMap((group) => group.items)
+    .filter((item) => item.id !== "home");
+
   return (
     <div className="admin-layout">
       {mobileMenuOpen && (
@@ -103,9 +105,7 @@ export default function AdminDashboard({ session, onLogout }) {
       )}
 
       <aside
-        className={`admin-sidebar ${
-          mobileMenuOpen ? "mobile-menu-open" : ""
-        }`}
+        className={`admin-sidebar ${mobileMenuOpen ? "mobile-menu-open" : ""}`}
       >
         <div className="admin-brand">
           <h2>KİLCAROĞLU</h2>
@@ -130,6 +130,7 @@ export default function AdminDashboard({ session, onLogout }) {
                   <span className="admin-menu-icon" aria-hidden="true">
                     {item.icon}
                   </span>
+
                   <span className="admin-menu-label">{item.label}</span>
                 </button>
               ))}
@@ -145,11 +146,7 @@ export default function AdminDashboard({ session, onLogout }) {
             </div>
           </div>
 
-          <button
-            type="button"
-            className="admin-logout"
-            onClick={onLogout}
-          >
+          <button type="button" className="admin-logout" onClick={onLogout}>
             <span aria-hidden="true">↪</span>
             <span>Güvenli Çıkış</span>
           </button>
@@ -185,6 +182,10 @@ export default function AdminDashboard({ session, onLogout }) {
                 <div>
                   <span className="admin-eyebrow">YÖNETİM PANELİ</span>
                   <h2>Hoş geldiniz!</h2>
+                  <p>
+                    İşletmenizin ürün, müşteri, sipariş ve dağıtım süreçlerini
+                    buradan yönetebilirsiniz.
+                  </p>
                 </div>
               </section>
 
@@ -196,11 +197,12 @@ export default function AdminDashboard({ session, onLogout }) {
                   </div>
                 </div>
 
-                {menuGroups
-                  .flatMap((group) => group.items)
-                  .filter((item) => item.id !== "home")
+                {allMenuItems
                   .reduce((groups, item, index) => {
-                    if (index % 3 === 0) groups.push([]);
+                    if (index % 3 === 0) {
+                      groups.push([]);
+                    }
+
                     groups[groups.length - 1].push(item);
                     return groups;
                   }, [])
@@ -213,12 +215,12 @@ export default function AdminDashboard({ session, onLogout }) {
                           key={item.id}
                           onClick={() => selectPage(item.id)}
                         >
-                          <span className="admin-quick-icon">
-                            {item.icon}
-                          </span>
+                          <span className="admin-quick-icon">{item.icon}</span>
+
                           <span className="admin-quick-title">
                             {item.label}
                           </span>
+
                           <span className="admin-quick-arrow">→</span>
                         </button>
                       ))}
@@ -232,6 +234,12 @@ export default function AdminDashboard({ session, onLogout }) {
             <AdminProductsPage session={session} />
           ) : activePage === "customers" ? (
             <AdminCustomersPage session={session} />
+          ) : activePage === "shipments" ? (
+            <AdminShipmentsPage session={session} />
+          ) : activePage === "routes" ? (
+            <AdminRoutesPage session={session} />
+          ) : activePage === "fleet" ? (
+            <AdminFleetPage session={session} />
           ) : (
             <section className="admin-module">
               <div className="admin-module-icon" aria-hidden="true">
@@ -241,12 +249,13 @@ export default function AdminDashboard({ session, onLogout }) {
               </div>
 
               <span className="admin-eyebrow">YÖNETİM MODÜLÜ</span>
+
               <h2>{currentPage.title}</h2>
               <p>{currentPage.description}</p>
 
               <div className="admin-coming-soon">
                 <span className="admin-coming-dot" />
-                Bu bölümün işlem ekranı bir sonraki aşamada hazırlanacak.
+                Bu bölümün işlem ekranı hazırlanacak.
               </div>
 
               <button

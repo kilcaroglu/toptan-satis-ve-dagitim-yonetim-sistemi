@@ -1,0 +1,473 @@
+
+/* GENEL SAYFA */
+.fleet-page {
+  width: 100%;
+  color: #172033;
+}
+
+.fleet-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+
+.fleet-page-header h1 {
+  margin: 0 0 6px;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.fleet-page-header p {
+  margin: 0;
+  color: #748094;
+  font-size: 13px;
+}
+
+.fleet-loading {
+  padding: 40px;
+  text-align: center;
+  color: #748094;
+}
+
+/* GENEL BUTONLAR */
+.fleet-page button {
+  font-family: inherit;
+}
+
+.fleet-primary-button,
+.fleet-secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.fleet-primary-button {
+  color: white;
+  background: #2457d6;
+}
+
+.fleet-primary-button:hover {
+  background: #1945b4;
+}
+
+.fleet-secondary-button {
+  color: #334155;
+  background: #edf1f7;
+}
+
+.fleet-primary-button:disabled,
+.fleet-secondary-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* HATA MESAJI */
+.fleet-error {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 15px;
+  margin-bottom: 15px;
+  border-radius: 9px;
+  color: #b42318;
+  background: #fff0ef;
+  border: 1px solid #ffd2ce;
+  font-size: 13px;
+}
+
+.fleet-error button {
+  padding: 7px 12px;
+  border: 0;
+  border-radius: 7px;
+  background: #b42318;
+  color: white;
+  cursor: pointer;
+}
+
+/* SEKME BUTONLARI */
+.fleet-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #e5eaf1;
+}
+
+.fleet-tabs button {
+  padding: 12px 18px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: #778398;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.fleet-tabs button.active {
+  color: #2457d6;
+  border-bottom-color: #2457d6;
+}
+
+/* ÖZET KARTLARI */
+.fleet-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.fleet-summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 18px;
+  background: white;
+  border: 1px solid #e8edf4;
+  border-radius: 12px;
+}
+
+.fleet-summary-card span {
+  color: #758197;
+  font-size: 12px;
+}
+
+.fleet-summary-card strong {
+  color: #172033;
+  font-size: 25px;
+}
+
+/* ARAMA VE EKLEME ALANI */
+.fleet-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 17px;
+}
+
+.fleet-toolbar input {
+  width: min(400px, 100%);
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid #dce3ed;
+  border-radius: 9px;
+  outline: none;
+  font-size: 13px;
+}
+
+.fleet-toolbar input:focus {
+  border-color: #527be0;
+  box-shadow: 0 0 0 3px rgba(36, 87, 214, 0.1);
+}
+
+/* TABLO */
+.fleet-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  background: white;
+  border: 1px solid #e8edf4;
+  border-radius: 12px;
+}
+
+.fleet-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.fleet-table th {
+  padding: 14px 16px;
+  background: #f7f9fc;
+  color: #748094;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.fleet-table td {
+  padding: 15px 16px;
+  border-top: 1px solid #edf0f5;
+  color: #536176;
+  font-size: 12px;
+}
+
+.fleet-table td strong {
+  color: #25334a;
+}
+
+/* DURUM ETİKETLERİ */
+.fleet-status {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.fleet-status.active {
+  color: #147447;
+  background: #e6f6ed;
+}
+
+.fleet-status.passive {
+  color: #9b5a22;
+  background: #fff1df;
+}
+
+/* TABLO İŞLEM BUTONLARI */
+.fleet-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.fleet-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 7px 11px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.fleet-button-edit {
+  color: #2457d6;
+  background: #edf3ff;
+}
+
+.fleet-button-edit:hover {
+  background: #dce8ff;
+}
+
+.fleet-button-danger {
+  color: #b91c1c;
+  background: #fee2e2;
+  border-color: #fecaca;
+}
+
+.fleet-button-danger:hover {
+  background: #fecaca;
+}
+
+.fleet-button-success {
+  color: #15803d;
+  background: #dcfce7;
+  border-color: #bbf7d0;
+}
+
+.fleet-button-success:hover {
+  background: #bbf7d0;
+}
+
+.fleet-button-cancel {
+  color: #475569;
+  background: #edf1f7;
+}
+
+.fleet-button-cancel:hover {
+  background: #dfe5ee;
+}
+
+/* BOŞ LİSTE */
+.fleet-empty {
+  padding: 45px 20px !important;
+  text-align: center;
+  color: #758197 !important;
+  background: white;
+  font-size: 13px !important;
+}
+
+/* MODAL ARKA PLANI */
+.fleet-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow-y: auto;
+  background: rgba(15, 23, 42, 0.58);
+}
+
+/* MODAL */
+.fleet-modal {
+  position: relative;
+  width: min(550px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  padding: 28px;
+  border-radius: 16px;
+  background: white;
+  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.2);
+}
+
+.fleet-modal h2 {
+  margin: 0 45px 24px 0;
+  color: #172033;
+  font-size: 21px;
+  font-weight: 800;
+}
+
+/* MODAL KAPATMA */
+.fleet-modal-close {
+  position: absolute;
+  top: 17px;
+  right: 17px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 35px;
+  height: 35px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: #f0f2f6;
+  color: #4b5563;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.fleet-modal-close:hover {
+  background: #e2e6ed;
+}
+
+/* FORM ALANLARI */
+.fleet-modal form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.fleet-modal form > label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #344054;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.fleet-modal input,
+.fleet-modal select,
+.fleet-modal textarea {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 11px 12px;
+  border: 1px solid #dce3ed;
+  border-radius: 8px;
+  outline: none;
+  background: white;
+  color: #263247;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.fleet-modal input:focus,
+.fleet-modal select:focus,
+.fleet-modal textarea:focus {
+  border-color: #527be0;
+  box-shadow: 0 0 0 3px rgba(36, 87, 214, 0.1);
+}
+
+.fleet-modal textarea {
+  resize: vertical;
+}
+
+/* KAPASİTE VE BİRİM */
+.fleet-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.fleet-form-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #344054;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* MODAL ALT BUTONLARI */
+.fleet-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  margin-top: 8px;
+  padding-top: 17px;
+  border-top: 1px solid #edf0f5;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .fleet-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 650px) {
+  .fleet-summary {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .fleet-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .fleet-toolbar input {
+    width: 100%;
+  }
+
+  .fleet-toolbar .fleet-primary-button {
+    width: 100%;
+  }
+
+  .fleet-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .fleet-modal {
+    padding: 22px 18px;
+  }
+
+  .fleet-form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .fleet-error {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 380px) {
+  .fleet-summary {
+    grid-template-columns: 1fr;
+  }
+}

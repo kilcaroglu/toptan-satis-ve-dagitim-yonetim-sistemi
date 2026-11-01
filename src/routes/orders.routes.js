@@ -43,22 +43,27 @@ router.post(
       // Sevkiyatın bu müşterinin ilçesine uygun olduğunu kontrol et
       const shipmentResult = await client.query(
         `SELECT
-                  shipments.id,
-                  shipments.shipment_date,
-                  routes.id AS route_id,
-                  routes.delivery_day,
-                  routes.order_deadline_day,
-                  routes.order_deadline_time
-                 FROM shipments
-                 INNER JOIN routes
-                    ON shipments.route_id = routes.id
-                 INNER JOIN route_districts
-                    ON routes.id = route_districts.route_id
-                 WHERE shipments.id = $1
-                   AND route_districts.district_id = $2
-                   AND routes.active = TRUE
-                   AND shipments.status = 'PLANNED'
-                 FOR UPDATE OF shipments`,
+            shipments.id,
+            shipments.shipment_date,
+            routes.id AS route_id,
+            route_schedules.delivery_day,
+            route_schedules.order_deadline_day,
+            route_schedules.order_deadline_time
+        FROM shipments
+        INNER JOIN routes
+            ON shipments.route_id = routes.id
+        INNER JOIN route_districts
+            ON routes.id = route_districts.route_id
+        INNER JOIN route_schedules
+            ON route_schedules.route_id = routes.id
+            AND route_schedules.delivery_day =
+                EXTRACT(ISODOW FROM shipments.shipment_date)::int
+            AND route_schedules.active = TRUE
+        WHERE shipments.id = $1
+          AND route_districts.district_id = $2
+          AND routes.active = TRUE
+          AND shipments.status = 'PLANNED'
+        FOR UPDATE OF shipments`,
         [shipment_id, customer.district_id],
       );
 
