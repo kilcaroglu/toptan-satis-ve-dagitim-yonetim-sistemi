@@ -1,3 +1,4 @@
+
 import { useCallback, useEffect, useState } from "react";
 import "./AdminRoutesPage.css";
 
@@ -31,6 +32,10 @@ export default function AdminRoutesPage({ session }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [districtUpdatingId, setDistrictUpdatingId] = useState(null);
+
+  // Pasif kayıtları göster/gizle
+  const [showInactiveRoutes, setShowInactiveRoutes] = useState(false);
+  const [showClosedDistricts, setShowClosedDistricts] = useState(false);
 
   const [form, setForm] = useState({
     id: null,
@@ -75,8 +80,11 @@ export default function AdminRoutesPage({ session }) {
       ]);
 
       setRoutes(Array.isArray(routeData) ? routeData : []);
+
       setDistricts(
-        Array.isArray(districtData.districts) ? districtData.districts : [],
+        Array.isArray(districtData.districts)
+          ? districtData.districts
+          : [],
       );
     } catch (err) {
       setError(err.message);
@@ -144,6 +152,7 @@ export default function AdminRoutesPage({ session }) {
       district_ids: [],
       schedules: [emptySchedule()],
     });
+
     setError("");
     setSuccess("");
     setModalOpen(true);
@@ -161,7 +170,9 @@ export default function AdminRoutesPage({ session }) {
         route.schedules?.map((schedule) => ({
           delivery_day: Number(schedule.delivery_day),
           order_deadline_day: Number(schedule.order_deadline_day),
-          order_deadline_time: String(schedule.order_deadline_time).slice(0, 5),
+          order_deadline_time: String(
+            schedule.order_deadline_time,
+          ).slice(0, 5),
         })) || [],
     });
 
@@ -177,7 +188,10 @@ export default function AdminRoutesPage({ session }) {
         i === index
           ? {
               ...schedule,
-              [field]: field === "order_deadline_time" ? value : Number(value),
+              [field]:
+                field === "order_deadline_time"
+                  ? value
+                  : Number(value),
             }
           : schedule,
       ),
@@ -189,7 +203,9 @@ export default function AdminRoutesPage({ session }) {
       Number(schedule.delivery_day),
     );
 
-    const availableDay = DAYS.find((day) => !usedDays.includes(day.value));
+    const availableDay = DAYS.find(
+      (day) => !usedDays.includes(day.value),
+    );
 
     if (!availableDay) {
       setError("Haftanın bütün günleri zaten eklenmiş.");
@@ -243,7 +259,9 @@ export default function AdminRoutesPage({ session }) {
       return;
     }
 
-    const days = form.schedules.map((item) => Number(item.delivery_day));
+    const days = form.schedules.map((item) =>
+      Number(item.delivery_day),
+    );
 
     if (new Set(days).size !== days.length) {
       setError("Aynı sevkiyat günü birden fazla kez seçilemez.");
@@ -297,8 +315,11 @@ export default function AdminRoutesPage({ session }) {
       });
 
       setModalOpen(false);
+
       setSuccess(
-        form.id ? "Rota başarıyla güncellendi." : "Yeni rota oluşturuldu.",
+        form.id
+          ? "Rota başarıyla güncellendi."
+          : "Yeni rota oluşturuldu.",
       );
 
       await loadData();
@@ -334,25 +355,42 @@ export default function AdminRoutesPage({ session }) {
     }
   }
 
-  const filteredRoutes = routes.filter((route) =>
+  // Arama ve aktif/pasif rota ayrımı
+  const searchedRoutes = routes.filter((route) =>
     route.name.toLowerCase().includes(search.toLowerCase()),
   );
+
+  const activeRoutes = searchedRoutes.filter(
+    (route) => route.active,
+  );
+
+  const inactiveRoutes = searchedRoutes.filter(
+    (route) => !route.active,
+  );
+
+  const filteredRoutes = [
+    ...activeRoutes,
+    ...(showInactiveRoutes ? inactiveRoutes : []),
+  ];
 
   const assignedDistrictIds = new Set(
     routes
       .filter((route) => route.id !== form.id)
       .flatMap((route) =>
-        (route.districts || []).map((district) => Number(district.id)),
+        (route.districts || []).map((district) =>
+          Number(district.id),
+        ),
       ),
   );
 
   // Yeni rotada yalnızca açık ilçeler görünür.
-  // Düzenlenen rotanın kendi ilçeleri ise mevcut seçimleri korumak
-  // için kapalı olsalar bile listede kalır.
+  // Düzenlenen rotanın kendi ilçeleri korunur.
   const availableDistricts = districts.filter((district) => {
     const districtId = Number(district.id);
     const alreadySelected = form.district_ids.includes(districtId);
-    const availableForNewRoute = district.active && district.delivery_available;
+
+    const availableForNewRoute =
+      district.active && district.delivery_available;
 
     return (
       !assignedDistrictIds.has(districtId) &&
@@ -361,12 +399,28 @@ export default function AdminRoutesPage({ session }) {
   });
 
   const openDistrictCount = districts.filter(
-    (district) => district.active && district.delivery_available,
+    (district) =>
+      district.active && district.delivery_available,
   ).length;
 
   const closedDistrictCount = districts.filter(
-    (district) => !district.delivery_available,
+    (district) =>
+      !district.active || !district.delivery_available,
   ).length;
+
+  // İlçeleri aktif/açık olanlar önce gelecek şekilde sırala.
+  const visibleDistricts = [
+    ...districts.filter(
+      (district) =>
+        district.active && district.delivery_available,
+    ),
+    ...(showClosedDistricts
+      ? districts.filter(
+          (district) =>
+            !district.active || !district.delivery_available,
+        )
+      : []),
+  ];
 
   return (
     <div className="routes-page">
@@ -374,8 +428,8 @@ export default function AdminRoutesPage({ session }) {
         <div>
           <h2>Rota yönetimi</h2>
           <p>
-            İlçeleri rotalara bağlayın ve haftalık sevkiyat programlarını
-            düzenleyin.
+            İlçeleri rotalara bağlayın ve haftalık sevkiyat
+            programlarını düzenleyin.
           </p>
         </div>
 
@@ -388,8 +442,13 @@ export default function AdminRoutesPage({ session }) {
         </button>
       </div>
 
-      {error && <div className="routes-alert error">{error}</div>}
-      {success && <div className="routes-alert success">{success}</div>}
+      {error && (
+        <div className="routes-alert error">{error}</div>
+      )}
+
+      {success && (
+        <div className="routes-alert success">{success}</div>
+      )}
 
       <div className="routes-summary">
         <div className="routes-summary-card">
@@ -399,7 +458,9 @@ export default function AdminRoutesPage({ session }) {
 
         <div className="routes-summary-card">
           <span>Aktif rota</span>
-          <strong>{routes.filter((route) => route.active).length}</strong>
+          <strong>
+            {routes.filter((route) => route.active).length}
+          </strong>
         </div>
 
         <div className="routes-summary-card">
@@ -423,7 +484,6 @@ export default function AdminRoutesPage({ session }) {
         </div>
       </div>
 
-
       <div className="routes-list-toolbar">
         <input
           type="search"
@@ -442,11 +502,32 @@ export default function AdminRoutesPage({ session }) {
         </button>
       </div>
 
+      {/* Pasif rotaları göster/gizle */}
+      <div className="inactive-record-toggle">
+        <button
+          type="button"
+          className="inactive-record-button"
+          onClick={() =>
+            setShowInactiveRoutes((current) => !current)
+          }
+        >
+          {showInactiveRoutes
+            ? "− Pasif rotaları gizle"
+            : "+ Pasif rotaları göster"}
+
+          <span>{inactiveRoutes.length}</span>
+        </button>
+      </div>
+
       {loading ? (
-        <div className="routes-empty">Rotalar yükleniyor...</div>
+        <div className="routes-empty">
+          Rotalar yükleniyor...
+        </div>
       ) : filteredRoutes.length === 0 ? (
         <div className="routes-empty">
-          Henüz rota bulunmuyor. Yeni rota oluşturarak başlayabilirsiniz.
+          {search
+            ? "Aramanızla eşleşen rota bulunamadı."
+            : "Henüz rota bulunmuyor. Yeni rota oluşturarak başlayabilirsiniz."}
         </div>
       ) : (
         <div className="routes-grid">
@@ -454,7 +535,9 @@ export default function AdminRoutesPage({ session }) {
             <article className="route-card" key={route.id}>
               <div className="route-card-heading">
                 <div>
-                  <span className="route-card-label">DAĞITIM ROTASI</span>
+                  <span className="route-card-label">
+                    DAĞITIM ROTASI
+                  </span>
                   <h3>{route.name}</h3>
                 </div>
 
@@ -473,12 +556,17 @@ export default function AdminRoutesPage({ session }) {
                 <div className="route-chip-list">
                   {route.districts?.length ? (
                     route.districts.map((district) => (
-                      <span className="route-chip" key={district.id}>
+                      <span
+                        className="route-chip"
+                        key={district.id}
+                      >
                         {district.name}
                       </span>
                     ))
                   ) : (
-                    <span className="route-muted">İlçe bağlanmamış</span>
+                    <span className="route-muted">
+                      İlçe bağlanmamış
+                    </span>
                   )}
                 </div>
               </div>
@@ -489,11 +577,15 @@ export default function AdminRoutesPage({ session }) {
                 {route.schedules?.length ? (
                   <div className="route-schedule-list">
                     {route.schedules.map((schedule) => (
-                      <div className="route-schedule-row" key={schedule.id}>
+                      <div
+                        className="route-schedule-row"
+                        key={schedule.id}
+                      >
                         <strong>
                           {DAYS.find(
                             (day) =>
-                              day.value === Number(schedule.delivery_day),
+                              day.value ===
+                              Number(schedule.delivery_day),
                           )?.label || "Bilinmeyen gün"}
                         </strong>
 
@@ -501,13 +593,18 @@ export default function AdminRoutesPage({ session }) {
                           Sipariş sonu:{" "}
                           {DAYS.find(
                             (day) =>
-                              day.value === Number(schedule.order_deadline_day),
+                              day.value ===
+                              Number(schedule.order_deadline_day),
                           )?.label || "—"}{" "}
-                          {String(schedule.order_deadline_time).slice(0, 5)}
+                          {String(
+                            schedule.order_deadline_time,
+                          ).slice(0, 5)}
                         </span>
 
                         {!schedule.active && (
-                          <span className="route-muted">Pasif</span>
+                          <span className="route-muted">
+                            Pasif
+                          </span>
                         )}
                       </div>
                     ))}
@@ -542,14 +639,13 @@ export default function AdminRoutesPage({ session }) {
       )}
 
       {/* İlçe sevkiyat yönetimi */}
-
       <section className="district-management">
         <div className="district-management-header">
           <div>
             <h3>İlçe sevkiyat yönetimi</h3>
             <p>
-              İlçeleri sevkiyata açıp kapatın. Açık ilçeler yeni rota oluşturma
-              ekranında seçilebilir.
+              İlçeleri sevkiyata açıp kapatın. Açık ilçeler yeni
+              rota oluşturma ekranında seçilebilir.
             </p>
           </div>
 
@@ -557,7 +653,9 @@ export default function AdminRoutesPage({ session }) {
             type="button"
             className="routes-secondary-button"
             onClick={loadData}
-            disabled={loading || districtUpdatingId !== null}
+            disabled={
+              loading || districtUpdatingId !== null
+            }
           >
             Yenile
           </button>
@@ -567,76 +665,110 @@ export default function AdminRoutesPage({ session }) {
           <span className="district-count-open">
             Sevkiyata açık: {openDistrictCount}
           </span>
+
           <span className="district-count-closed">
             Sevkiyata kapalı: {closedDistrictCount}
           </span>
         </div>
 
         {loading ? (
-          <div className="routes-empty">İlçeler yükleniyor...</div>
-        ) : districts.length === 0 ? (
-          <div className="routes-empty">Sistemde kayıtlı ilçe bulunamadı.</div>
-        ) : (
-          <div className="district-management-list">
-            {districts.map((district) => {
-              const isOpen = district.active && district.delivery_available;
-              const isUpdating =
-                Number(districtUpdatingId) === Number(district.id);
-
-              return (
-                <div className="district-management-item" key={district.id}>
-                  <div className="district-management-info">
-                    <strong>{district.name}</strong>
-
-                    <span
-                      className={`district-delivery-status ${
-                        isOpen ? "open" : "closed"
-                      }`}
-                    >
-                      {isOpen
-                        ? "Sevkiyata açık"
-                        : district.active
-                          ? "Sevkiyata kapalı"
-                          : "İlçe pasif"}
-                    </span>
-                  </div>
-
-                  <button
-                    type="button"
-                    className={`district-delivery-button ${
-                      isOpen ? "close" : "open"
-                    }`}
-                    onClick={() => toggleDistrictDelivery(district)}
-                    disabled={
-                      isUpdating ||
-                      loading ||
-                      districtUpdatingId !== null ||
-                      !district.active
-                    }
-                    title={
-                      !district.active
-                        ? "Önce ilçenin genel aktifliğini açmalısınız."
-                        : ""
-                    }
-                  >
-                    {isUpdating
-                      ? "Kaydediliyor..."
-                      : isOpen
-                        ? "Sevkiyata kapat"
-                        : "Sevkiyata aç"}
-                  </button>
-                </div>
-              );
-            })}
+          <div className="routes-empty">
+            İlçeler yükleniyor...
           </div>
+        ) : districts.length === 0 ? (
+          <div className="routes-empty">
+            Sistemde kayıtlı ilçe bulunamadı.
+          </div>
+        ) : (
+          <>
+            {/* Kapalı ilçeleri göster/gizle */}
+            <div className="inactive-record-toggle district-inactive-toggle">
+              <button
+                type="button"
+                className="inactive-record-button"
+                onClick={() =>
+                  setShowClosedDistricts((current) => !current)
+                }
+              >
+                {showClosedDistricts
+                  ? "− Kapalı ilçeleri gizle"
+                  : "+ Kapalı ilçeleri göster"}
+
+                <span>{closedDistrictCount}</span>
+              </button>
+            </div>
+
+            <div className="district-management-list">
+              {visibleDistricts.map((district) => {
+                const isOpen =
+                  district.active &&
+                  district.delivery_available;
+
+                const isUpdating =
+                  Number(districtUpdatingId) ===
+                  Number(district.id);
+
+                return (
+                  <div
+                    className="district-management-item"
+                    key={district.id}
+                  >
+                    <div className="district-management-info">
+                      <strong>{district.name}</strong>
+
+                      <span
+                        className={`district-delivery-status ${
+                          isOpen ? "open" : "closed"
+                        }`}
+                      >
+                        {isOpen
+                          ? "Sevkiyata açık"
+                          : district.active
+                            ? "Sevkiyata kapalı"
+                            : "İlçe pasif"}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      className={`district-delivery-button ${
+                        isOpen ? "close" : "open"
+                      }`}
+                      onClick={() =>
+                        toggleDistrictDelivery(district)
+                      }
+                      disabled={
+                        isUpdating ||
+                        loading ||
+                        districtUpdatingId !== null ||
+                        !district.active
+                      }
+                      title={
+                        !district.active
+                          ? "Önce ilçenin genel aktifliğini açmalısınız."
+                          : ""
+                      }
+                    >
+                      {isUpdating
+                        ? "Kaydediliyor..."
+                        : isOpen
+                          ? "Sevkiyata kapat"
+                          : "Sevkiyata aç"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
 
         <small className="district-management-note">
-          Aktif bir rotaya bağlı ilçeler, o rotadan çıkarılmadan sevkiyata
-          kapatılamaz. İlçeyi kapatmak geçmiş siparişleri veya sevkiyatları
-          silmez.
+          Aktif bir rotaya bağlı ilçeler, o rotadan çıkarılmadan
+          sevkiyata kapatılamaz. İlçeyi kapatmak geçmiş siparişleri
+          veya sevkiyatları silmez.
         </small>
       </section>
+
       {modalOpen && (
         <div
           className="routes-modal-overlay"
@@ -646,11 +778,20 @@ export default function AdminRoutesPage({ session }) {
             }
           }}
         >
-          <form className="routes-modal" onSubmit={saveRoute}>
+          <form
+            className="routes-modal"
+            onSubmit={saveRoute}
+          >
             <div className="routes-modal-header">
               <div>
-                <span className="route-card-label">ROTA TANIMLAMA</span>
-                <h2>{form.id ? "Rotayı düzenle" : "Yeni rota oluştur"}</h2>
+                <span className="route-card-label">
+                  ROTA TANIMLAMA
+                </span>
+                <h2>
+                  {form.id
+                    ? "Rotayı düzenle"
+                    : "Yeni rota oluştur"}
+                </h2>
               </div>
 
               <button
@@ -663,10 +804,15 @@ export default function AdminRoutesPage({ session }) {
               </button>
             </div>
 
-            {error && <div className="routes-alert error">{error}</div>}
+            {error && (
+              <div className="routes-alert error">
+                {error}
+              </div>
+            )}
 
             <div className="routes-form-group">
               <label>Rota adı</label>
+
               <input
                 type="text"
                 value={form.name}
@@ -702,8 +848,8 @@ export default function AdminRoutesPage({ session }) {
                 <div>
                   <label>Rotaya bağlı ilçeler</label>
                   <p>
-                    Sevkiyata açık ilçelerden bu rotaya dahil etmek
-                    istediklerinizi seçin.
+                    Sevkiyata açık ilçelerden bu rotaya dahil
+                    etmek istediklerinizi seçin.
                   </p>
                 </div>
               </div>
@@ -715,30 +861,40 @@ export default function AdminRoutesPage({ session }) {
                   </p>
                 ) : (
                   availableDistricts.map((district) => {
-                    const isSelected = form.district_ids.includes(
-                      Number(district.id),
-                    );
+                    const isSelected =
+                      form.district_ids.includes(
+                        Number(district.id),
+                      );
 
                     const isClosed =
-                      !district.active || !district.delivery_available;
+                      !district.active ||
+                      !district.delivery_available;
 
                     return (
                       <label
                         className={`route-district-option ${
-                          isClosed ? "route-district-option-closed" : ""
+                          isClosed
+                            ? "route-district-option-closed"
+                            : ""
                         }`}
                         key={district.id}
                       >
                         <input
                           type="checkbox"
                           checked={isSelected}
-                          onChange={() => toggleDistrict(Number(district.id))}
+                          onChange={() =>
+                            toggleDistrict(Number(district.id))
+                          }
                         />
 
                         <span>
                           {district.name}
+
                           {isClosed && (
-                            <small> (Mevcut rotada, sevkiyata kapalı)</small>
+                            <small>
+                              {" "}
+                              (Mevcut rotada, sevkiyata kapalı)
+                            </small>
                           )}
                         </span>
                       </label>
@@ -748,9 +904,10 @@ export default function AdminRoutesPage({ session }) {
               </div>
 
               <small>
-                Başka bir rotaya bağlı ilçeler burada gösterilmez. Yeni rotalara
-                yalnızca sevkiyata açık ilçeler eklenebilir. Mevcut rotanın
-                ilçeleri düzenleme sırasında korunur.
+                Başka bir rotaya bağlı ilçeler burada gösterilmez.
+                Yeni rotalara yalnızca sevkiyata açık ilçeler
+                eklenebilir. Mevcut rotanın ilçeleri düzenleme
+                sırasında korunur.
               </small>
             </div>
 
@@ -759,8 +916,8 @@ export default function AdminRoutesPage({ session }) {
                 <div>
                   <label>Haftalık sevkiyat günleri</label>
                   <p>
-                    Her sevkiyat günü için sipariş son gününü ve saatini
-                    belirleyin.
+                    Her sevkiyat günü için sipariş son gününü ve
+                    saatini belirleyin.
                   </p>
                 </div>
 
@@ -775,9 +932,13 @@ export default function AdminRoutesPage({ session }) {
 
               <div className="routes-schedule-editor">
                 {form.schedules.map((schedule, index) => (
-                  <div className="routes-schedule-editor-row" key={index}>
+                  <div
+                    className="routes-schedule-editor-row"
+                    key={index}
+                  >
                     <div>
                       <label>Sevkiyat günü</label>
+
                       <select
                         value={schedule.delivery_day}
                         onChange={(event) =>
@@ -795,7 +956,8 @@ export default function AdminRoutesPage({ session }) {
                             disabled={form.schedules.some(
                               (other, otherIndex) =>
                                 otherIndex !== index &&
-                                Number(other.delivery_day) === day.value,
+                                Number(other.delivery_day) ===
+                                  day.value,
                             )}
                           >
                             {day.label}
@@ -806,6 +968,7 @@ export default function AdminRoutesPage({ session }) {
 
                     <div>
                       <label>Sipariş son günü</label>
+
                       <select
                         value={schedule.order_deadline_day}
                         onChange={(event) =>
@@ -817,7 +980,10 @@ export default function AdminRoutesPage({ session }) {
                         }
                       >
                         {DAYS.map((day) => (
-                          <option value={day.value} key={day.value}>
+                          <option
+                            value={day.value}
+                            key={day.value}
+                          >
                             {day.label}
                           </option>
                         ))}
@@ -826,6 +992,7 @@ export default function AdminRoutesPage({ session }) {
 
                     <div>
                       <label>Son sipariş saati</label>
+
                       <input
                         type="time"
                         value={schedule.order_deadline_time}

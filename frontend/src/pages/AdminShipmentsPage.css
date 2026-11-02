@@ -622,3 +622,98 @@
     padding: 22px 18px;
   }
 }
+
+
+/* Haftalık sevkiyat gezinme alanı */
+.shipment-week-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: 0 0 25px;
+  padding: 15px;
+  border: 1px solid #e6ebf2;
+  border-radius: 11px;
+  background: #fff;
+}
+
+.shipment-week-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  min-width: 210px;
+}
+
+.shipment-week-label span {
+  color: #8794a7;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.shipment-week-label strong {
+  color: #102847;
+  font-size: 15px;
+}
+
+.shipment-week-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid #dce4ef;
+  border-radius: 8px;
+  background: white;
+  color: #334155;
+  cursor: pointer;
+  font-size: 25px;
+  line-height: 1;
+  transition: 0.18s ease;
+}
+
+.shipment-week-button:hover {
+  border-color: #3478d4;
+  background: #edf4ff;
+  color: #2866b8;
+}
+
+.shipment-week-current {
+  min-height: 35px;
+  padding: 7px 11px;
+  border: 1px solid #dce4ef;
+  border-radius: 7px;
+  background: #f7faff;
+  color: #3478d4;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.shipment-week-current:hover {
+  background: #edf4ff;
+}
+
+@media (max-width: 650px) {
+  .shipment-week-navigation {
+    gap: 8px;
+    padding: 12px 8px;
+    flex-wrap: wrap;
+  }
+
+  .shipment-week-label {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .shipment-week-label strong {
+    font-size: 12px;
+    text-align: center;
+  }
+
+  .shipment-week-current {
+    width: 100%;
+  }
+}

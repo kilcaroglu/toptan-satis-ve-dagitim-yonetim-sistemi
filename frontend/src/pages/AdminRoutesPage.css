@@ -1,3 +1,4 @@
+
 .routes-page {
   width: 100%;
   color: #172033;
@@ -103,7 +104,7 @@
 }
 
 .routes-list-toolbar {
-  margin-bottom: 20px;
+  margin-bottom: 15px;
 }
 
 .routes-list-toolbar input {
@@ -146,6 +147,7 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
+  margin-bottom: 35px;
 }
 
 .route-card {
@@ -452,57 +454,50 @@
   border-top: 1px solid #edf0f5;
 }
 
-@media (max-width: 900px) {
-  .routes-summary {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .routes-grid {
-    grid-template-columns: 1fr;
-  }
+/* Pasif kayıtları göster/gizle butonu */
+.inactive-record-toggle {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 0 14px;
 }
 
-@media (max-width: 560px) {
-  .routes-modal {
-    padding: 19px;
-  }
-
-  .routes-schedule-editor-row {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .routes-remove-day {
-    grid-column: 2;
-    justify-self: end;
-  }
-
-  .route-district-options {
-    grid-template-columns: 1fr;
-  }
-
-  .routes-toolbar {
-    align-items: flex-start;
-  }
-
-  .routes-primary-button {
-    width: 100%;
-  }
-
-  .routes-summary-card {
-    padding: 14px;
-  }
-
-  .routes-summary-card strong {
-    font-size: 21px;
-  }
+.inactive-record-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 13px;
+  border: 1px solid #e0e6ef;
+  border-radius: 8px;
+  background: #f7f9fc;
+  color: #526176;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s;
 }
 
-/* =====================================
-   İLÇE SEVKİYAT YÖNETİMİ
-===================================== */
+.inactive-record-button:hover {
+  background: #edf3ff;
+  border-color: #cbd9f4;
+  color: #2457d6;
+}
 
+.inactive-record-button span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 21px;
+  height: 21px;
+  padding: 0 6px;
+  border-radius: 20px;
+  background: #e7ebf1;
+  color: #64748b;
+  font-size: 10px;
+}
+
+/* İlçe sevkiyat yönetimi */
 .district-management {
-  margin: 0 0 25px;
+  margin: 25px 0;
   padding: 21px;
   background: #ffffff;
   border: 1px solid #e8edf4;
@@ -554,6 +549,11 @@
 .district-count-closed {
   color: #a33b32;
   background: #fff0ef;
+}
+
+.district-inactive-toggle {
+  margin-top: 5px;
+  margin-bottom: 12px;
 }
 
 .district-management-list {
@@ -658,6 +658,16 @@
   font-size: 10px;
 }
 
+@media (max-width: 900px) {
+  .routes-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .routes-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 700px) {
   .district-management-list {
     grid-template-columns: 1fr;
@@ -670,6 +680,41 @@
 
   .district-management-header > button {
     align-self: flex-start;
+  }
+}
+
+@media (max-width: 560px) {
+  .routes-modal {
+    padding: 19px;
+  }
+
+  .routes-schedule-editor-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .routes-remove-day {
+    grid-column: 2;
+    justify-self: end;
+  }
+
+  .route-district-options {
+    grid-template-columns: 1fr;
+  }
+
+  .routes-toolbar {
+    align-items: flex-start;
+  }
+
+  .routes-primary-button {
+    width: 100%;
+  }
+
+  .routes-summary-card {
+    padding: 14px;
+  }
+
+  .routes-summary-card strong {
+    font-size: 21px;
   }
 }
 
@@ -686,14 +731,4 @@
   .district-delivery-button {
     width: 100%;
   }
-}
-
-/* Rota kartları ile ilçe yönetimi arasındaki boşluk */
-.routes-grid {
-  margin-bottom: 35px;
-}
-
-.district-management {
-  margin-top: 25px;
-  margin-bottom: 25px;
 }

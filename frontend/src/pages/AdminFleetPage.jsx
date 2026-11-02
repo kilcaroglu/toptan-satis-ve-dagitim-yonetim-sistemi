@@ -17,9 +17,12 @@ function AdminFleetPage({ session }) {
   const [vehicleSearch, setVehicleSearch] = useState("");
   const [personnelSearch, setPersonnelSearch] = useState("");
 
+  // Pasif kayıtları gösterme ayarları
+  const [showInactiveVehicles, setShowInactiveVehicles] = useState(false);
+  const [showInactivePersonnel, setShowInactivePersonnel] = useState(false);
+
   const [showVehicleModal, setShowVehicleModal] = useState(false);
   const [showPersonnelModal, setShowPersonnelModal] = useState(false);
-
   const [editingVehicle, setEditingVehicle] = useState(null);
 
   const emptyVehicle = {
@@ -57,9 +60,7 @@ function AdminFleetPage({ session }) {
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-      throw new Error(
-        data.message || "İşlem gerçekleştirilemedi."
-      );
+      throw new Error(data.message || "İşlem gerçekleştirilemedi.");
     }
 
     return data;
@@ -92,7 +93,7 @@ function AdminFleetPage({ session }) {
   // Araç formu
   const openNewVehicle = () => {
     setEditingVehicle(null);
-    setVehicleForm(emptyVehicle);
+    setVehicleForm({ ...emptyVehicle });
     setShowVehicleModal(true);
   };
 
@@ -150,7 +151,7 @@ function AdminFleetPage({ session }) {
       }
 
       setShowVehicleModal(false);
-      setVehicleForm(emptyVehicle);
+      setVehicleForm({ ...emptyVehicle });
       setEditingVehicle(null);
 
       await loadData();
@@ -193,7 +194,7 @@ function AdminFleetPage({ session }) {
 
   // Personel formu
   const openNewPersonnel = () => {
-    setPersonnelForm(emptyPersonnel);
+    setPersonnelForm({ ...emptyPersonnel });
     setShowPersonnelModal(true);
   };
 
@@ -224,7 +225,7 @@ function AdminFleetPage({ session }) {
       });
 
       setShowPersonnelModal(false);
-      setPersonnelForm(emptyPersonnel);
+      setPersonnelForm({ ...emptyPersonnel });
 
       await loadData();
 
@@ -266,8 +267,12 @@ function AdminFleetPage({ session }) {
     }
   };
 
-  // Arama filtreleri
+  // Arama ve aktif/pasif filtreleri
   const filteredVehicles = vehicles.filter((vehicle) => {
+    if (!showInactiveVehicles && !vehicle.active) {
+      return false;
+    }
+
     const search = vehicleSearch.toLocaleLowerCase("tr");
 
     return (
@@ -278,6 +283,10 @@ function AdminFleetPage({ session }) {
   });
 
   const filteredPersonnel = personnel.filter((person) => {
+    if (!showInactivePersonnel && !person.active) {
+      return false;
+    }
+
     const search = personnelSearch.toLocaleLowerCase("tr");
 
     return (
@@ -287,6 +296,7 @@ function AdminFleetPage({ session }) {
     );
   });
 
+  // Özet sayıları
   const activeVehicleCount = vehicles.filter(
     (vehicle) => vehicle.active
   ).length;
@@ -381,10 +391,20 @@ function AdminFleetPage({ session }) {
               type="text"
               placeholder="Plaka, marka veya model ara..."
               value={vehicleSearch}
-              onChange={(event) =>
-                setVehicleSearch(event.target.value)
-              }
+              onChange={(event) => setVehicleSearch(event.target.value)}
             />
+
+            <button
+              type="button"
+              className="fleet-filter-button"
+              onClick={() =>
+                setShowInactiveVehicles((previous) => !previous)
+              }
+            >
+              {showInactiveVehicles
+                ? "Pasifleri Gizle"
+                : "Pasifleri Göster"}
+            </button>
 
             <button
               type="button"
@@ -393,6 +413,12 @@ function AdminFleetPage({ session }) {
             >
               + Yeni Araç Ekle
             </button>
+          </div>
+
+          <div className="fleet-result-count">
+            {filteredVehicles.length} araç listeleniyor
+            {!showInactiveVehicles && passiveVehicleCount > 0 &&
+              ` · ${passiveVehicleCount} pasif araç gizli`}
           </div>
 
           <div className="fleet-table-wrapper">
@@ -416,8 +442,7 @@ function AdminFleetPage({ session }) {
                     </td>
 
                     <td>
-                      {vehicle.brand || "-"}{" "}
-                      {vehicle.model || ""}
+                      {vehicle.brand || "-"} {vehicle.model || ""}
                     </td>
 
                     <td>{vehicle.vehicle_type || "-"}</td>
@@ -455,9 +480,7 @@ function AdminFleetPage({ session }) {
                               ? "fleet-button-danger"
                               : "fleet-button-success"
                           }`}
-                          onClick={() =>
-                            toggleVehicleActive(vehicle)
-                          }
+                          onClick={() => toggleVehicleActive(vehicle)}
                         >
                           {vehicle.active ? "Pasif Yap" : "Aktif Yap"}
                         </button>
@@ -469,7 +492,9 @@ function AdminFleetPage({ session }) {
                 {filteredVehicles.length === 0 && (
                   <tr>
                     <td colSpan="6" className="fleet-empty">
-                      Araç bulunamadı.
+                      {vehicles.length === 0
+                        ? "Henüz araç eklenmemiş."
+                        : "Arama kriterlerine uygun araç bulunamadı."}
                     </td>
                   </tr>
                 )}
@@ -514,10 +539,20 @@ function AdminFleetPage({ session }) {
               type="text"
               placeholder="Ad, e-posta veya telefon ara..."
               value={personnelSearch}
-              onChange={(event) =>
-                setPersonnelSearch(event.target.value)
-              }
+              onChange={(event) => setPersonnelSearch(event.target.value)}
             />
+
+            <button
+              type="button"
+              className="fleet-filter-button"
+              onClick={() =>
+                setShowInactivePersonnel((previous) => !previous)
+              }
+            >
+              {showInactivePersonnel
+                ? "Pasifleri Gizle"
+                : "Pasifleri Göster"}
+            </button>
 
             <button
               type="button"
@@ -526,6 +561,12 @@ function AdminFleetPage({ session }) {
             >
               + Yeni Personel Ekle
             </button>
+          </div>
+
+          <div className="fleet-result-count">
+            {filteredPersonnel.length} personel listeleniyor
+            {!showInactivePersonnel && passivePersonnelCount > 0 &&
+              ` · ${passivePersonnelCount} pasif personel gizli`}
           </div>
 
           <div className="fleet-table-wrapper">
@@ -549,7 +590,6 @@ function AdminFleetPage({ session }) {
                     </td>
 
                     <td>{person.email}</td>
-
                     <td>{person.phone || "-"}</td>
 
                     <td>
@@ -576,9 +616,7 @@ function AdminFleetPage({ session }) {
                             ? "fleet-button-danger"
                             : "fleet-button-success"
                         }`}
-                        onClick={() =>
-                          togglePersonnelActive(person)
-                        }
+                        onClick={() => togglePersonnelActive(person)}
                       >
                         {person.active ? "Pasif Yap" : "Aktif Yap"}
                       </button>
@@ -589,7 +627,9 @@ function AdminFleetPage({ session }) {
                 {filteredPersonnel.length === 0 && (
                   <tr>
                     <td colSpan="6" className="fleet-empty">
-                      Personel bulunamadı.
+                      {personnel.length === 0
+                        ? "Henüz personel eklenmemiş."
+                        : "Arama kriterlerine uygun personel bulunamadı."}
                     </td>
                   </tr>
                 )}
@@ -800,9 +840,7 @@ function AdminFleetPage({ session }) {
                   onChange={handlePersonnelFormChange}
                 >
                   <option value="DRIVER">Sürücü</option>
-                  <option value="DISTRIBUTOR">
-                    Dağıtım Personeli
-                  </option>
+                  <option value="DISTRIBUTOR">Dağıtım Personeli</option>
                 </select>
               </label>
 

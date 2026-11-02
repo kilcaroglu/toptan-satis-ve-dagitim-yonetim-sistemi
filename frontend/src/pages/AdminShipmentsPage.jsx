@@ -17,15 +17,55 @@ const DAY_NAMES = [
   "Perşembe", "Cuma", "Cumartesi"
 ];
 
+function dateKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function parseDate(value) {
+  const [year, month, day] = String(value).slice(0, 10).split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function getWeekStart(date) {
+  const result = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const day = result.getDay();
+  const difference = day === 0 ? -6 : 1 - day;
+  result.setDate(result.getDate() + difference);
+  return result;
+}
+
+function addDays(date, amount) {
+  const result = new Date(date);
+  result.setDate(result.getDate() + amount);
+  return result;
+}
+
 function formatDate(value) {
   if (!value) return "-";
 
-  const date = new Date(`${String(value).slice(0, 10)}T00:00:00`);
-  return date.toLocaleDateString("tr-TR", {
+  return parseDate(value).toLocaleDateString("tr-TR", {
     day: "2-digit",
     month: "long",
     year: "numeric"
   });
+}
+
+function formatWeekRange(start, end) {
+  const startText = start.toLocaleDateString("tr-TR", {
+    day: "2-digit",
+    month: "long"
+  });
+
+  const endText = end.toLocaleDateString("tr-TR", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric"
+  });
+
+  return `${startText} – ${endText}`;
 }
 
 function getStatusLabel(status) {
@@ -49,7 +89,7 @@ export default function AdminShipmentsPage({ session }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const [dateFilter, setDateFilter] = useState("");
+  const [weekStart, setWeekStart] = useState(() => getWeekStart(new Date()));
   const [statusFilter, setStatusFilter] = useState("ALL");
 
   const [selectedShipment, setSelectedShipment] = useState(null);
@@ -115,30 +155,49 @@ export default function AdminShipmentsPage({ session }) {
     loadData();
   }, [loadData]);
 
+  const weekEnd = useMemo(() => addDays(weekStart, 6), [weekStart]);
+  const weekStartKey = dateKey(weekStart);
+  const weekEndKey = dateKey(weekEnd);
+  const currentWeekStartKey = dateKey(getWeekStart(new Date()));
+
+  const weekShipments = useMemo(() => {
+    return shipments
+      .filter(shipment => {
+        const shipmentDate = String(shipment.shipment_date || "").slice(0, 10);
+
+        return shipmentDate >= weekStartKey && shipmentDate <= weekEndKey;
+      })
+      .sort((a, b) => {
+        return String(b.shipment_date).localeCompare(String(a.shipment_date));
+      });
+  }, [shipments, weekStartKey, weekEndKey]);
+
   const filteredShipments = useMemo(() => {
-    return shipments.filter(shipment => {
-      const shipmentDate = String(shipment.shipment_date || "").slice(0, 10);
+    if (statusFilter === "ALL") return weekShipments;
 
-      const matchesDate =
-        !dateFilter || shipmentDate === dateFilter;
-
-      const matchesStatus =
-        statusFilter === "ALL" || shipment.status === statusFilter;
-
-      return matchesDate && matchesStatus;
-    });
-  }, [shipments, dateFilter, statusFilter]);
+    return weekShipments.filter(
+      shipment => shipment.status === statusFilter
+    );
+  }, [weekShipments, statusFilter]);
 
   const activeVehicles = vehicles.filter(vehicle => vehicle.active);
   const activePersonnel = personnel.filter(person => person.active);
 
   const summary = useMemo(() => ({
-    total: shipments.length,
-    planned: shipments.filter(item => item.status === "PLANNED").length,
-    preparing: shipments.filter(item => item.status === "PREPARING").length,
-    onTheWay: shipments.filter(item => item.status === "ON_THE_WAY").length,
-    delivered: shipments.filter(item => item.status === "DELIVERED").length
-  }), [shipments]);
+    total: weekShipments.length,
+    planned: weekShipments.filter(item => item.status === "PLANNED").length,
+    preparing: weekShipments.filter(item => item.status === "PREPARING").length,
+    onTheWay: weekShipments.filter(item => item.status === "ON_THE_WAY").length,
+    delivered: weekShipments.filter(item => item.status === "DELIVERED").length
+  }), [weekShipments]);
+
+  function changeWeek(amount) {
+    setWeekStart(current => addDays(current, amount * 7));
+  }
+
+  function showCurrentWeek() {
+    setWeekStart(getWeekStart(new Date()));
+  }
 
   function openAssignment(shipment) {
     setSelectedShipment(shipment);
@@ -165,34 +224,6 @@ export default function AdminShipmentsPage({ session }) {
     });
   }
 
-  async function generateWeek() {
-    if (!window.confirm(
-      "Aktif rotaların önümüzdeki 7 günlük sevkiyatları oluşturulsun mu?"
-    )) {
-      return;
-    }
-
-    setBusy(true);
-    setError("");
-    setSuccess("");
-
-    try {
-      const result = await request("/shipments/generate-week", {
-        method: "POST"
-      });
-
-      setSuccess(
-        `${result.created_count ?? 0} yeni sevkiyat oluşturuldu.`
-      );
-
-      await loadData();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setBusy(false);
-    }
-  }
-
   async function createShipment(event) {
     event.preventDefault();
 
@@ -216,7 +247,7 @@ export default function AdminShipmentsPage({ session }) {
 
       setShowCreateModal(false);
       setNewShipment({ route_id: "", shipment_date: "" });
-      setSuccess("Sevkiyat oluşturuldu.");
+      setSuccess("Manuel sevkiyat oluşturuldu.");
       await loadData();
     } catch (err) {
       setError(err.message);
@@ -301,7 +332,7 @@ export default function AdminShipmentsPage({ session }) {
         <div>
           <span className="shipments-eyebrow">DAĞITIM VE LOJİSTİK</span>
           <h2>Sevkiyat Yönetimi</h2>
-          <p>Sevkiyatları planlayın, araç ve personel atamalarını yönetin.</p>
+          <p>Haftalık sevkiyatları, araçları ve dağıtım personelini yönetin.</p>
         </div>
 
         <div className="shipments-heading-actions">
@@ -318,15 +349,7 @@ export default function AdminShipmentsPage({ session }) {
             onClick={() => setShowCreateModal(true)}
             disabled={busy}
           >
-            + Sevkiyat Ekle
-          </button>
-
-          <button
-            className="shipment-button shipment-button-primary"
-            onClick={generateWeek}
-            disabled={busy}
-          >
-            {busy ? "İşleniyor..." : "7 Günlük Plan Oluştur"}
+            + İstisnai Sevkiyat
           </button>
         </div>
       </div>
@@ -347,7 +370,7 @@ export default function AdminShipmentsPage({ session }) {
 
       <div className="shipment-summary-grid">
         <div className="shipment-summary-card">
-          <span>Toplam sevkiyat</span>
+          <span>Bu haftaki sevkiyat</span>
           <strong>{summary.total}</strong>
         </div>
         <div className="shipment-summary-card">
@@ -368,24 +391,49 @@ export default function AdminShipmentsPage({ session }) {
         </div>
       </div>
 
+      <div className="shipment-week-navigation">
+        <button
+          className="shipment-week-button"
+          onClick={() => changeWeek(-1)}
+          aria-label="Önceki hafta"
+        >
+          ‹
+        </button>
+
+        <div className="shipment-week-label">
+          <span>GÖRÜNTÜLENEN HAFTA</span>
+          <strong>{formatWeekRange(weekStart, weekEnd)}</strong>
+        </div>
+
+        <button
+          className="shipment-week-button"
+          onClick={() => changeWeek(1)}
+          aria-label="Sonraki hafta"
+        >
+          ›
+        </button>
+
+        {weekStartKey !== currentWeekStartKey && (
+          <button
+            className="shipment-week-current"
+            onClick={showCurrentWeek}
+          >
+            Bu haftaya dön
+          </button>
+        )}
+      </div>
+
       <div className="shipments-toolbar">
         <div>
-          <h3>Sevkiyat Listesi</h3>
-          <p>{filteredShipments.length} sevkiyat gösteriliyor</p>
+          <h3>Haftalık Sevkiyatlar</h3>
+          <p>
+            {filteredShipments.length} / {weekShipments.length} sevkiyat gösteriliyor
+          </p>
         </div>
 
         <div className="shipment-filters">
           <label>
-            <span>Tarih</span>
-            <input
-              type="date"
-              value={dateFilter}
-              onChange={event => setDateFilter(event.target.value)}
-            />
-          </label>
-
-          <label>
-            <span>Durum</span>
+            <span>Durum filtresi</span>
             <select
               value={statusFilter}
               onChange={event => setStatusFilter(event.target.value)}
@@ -401,12 +449,9 @@ export default function AdminShipmentsPage({ session }) {
 
           <button
             className="shipment-clear-filter"
-            onClick={() => {
-              setDateFilter("");
-              setStatusFilter("ALL");
-            }}
+            onClick={() => setStatusFilter("ALL")}
           >
-            Filtreleri temizle
+            Filtreyi temizle
           </button>
         </div>
       </div>
@@ -416,73 +461,77 @@ export default function AdminShipmentsPage({ session }) {
       ) : filteredShipments.length === 0 ? (
         <div className="shipment-empty">
           <div>🚚</div>
-          <strong>Sevkiyat bulunamadı</strong>
-          <p>Seçilen filtrelere uygun sevkiyat yok.</p>
+          <strong>Bu hafta sevkiyat bulunamadı</strong>
+          <p>
+            Bu haftada kayıtlı sevkiyat yok veya seçtiğiniz duruma uygun kayıt bulunamadı.
+          </p>
         </div>
       ) : (
         <div className="shipment-list">
-          {filteredShipments.map(shipment => (
-            <article className="shipment-card" key={shipment.id}>
-              <div className="shipment-card-top">
-                <div>
-                  <span className="shipment-number">
-                    SEVKİYAT #{shipment.id}
+          {filteredShipments.map(shipment => {
+            const shipmentDate = parseDate(shipment.shipment_date);
+
+            return (
+              <article className="shipment-card" key={shipment.id}>
+                <div className="shipment-card-top">
+                  <div>
+                    <span className="shipment-number">
+                      SEVKİYAT #{shipment.id}
+                    </span>
+                    <h3>{shipment.route_name || "Rota bilgisi yok"}</h3>
+                    <p>
+                      {DAY_NAMES[shipmentDate.getDay()]}
+                      {" · "}
+                      {formatDate(shipment.shipment_date)}
+                    </p>
+                  </div>
+
+                  <span className={getStatusClass(shipment.status)}>
+                    {getStatusLabel(shipment.status)}
                   </span>
-                  <h3>{shipment.route_name || "Rota bilgisi yok"}</h3>
-                  <p>
-                    {formatDate(shipment.shipment_date)}
-                    {" · "}
-                    {DAY_NAMES[new Date(
-                      `${String(shipment.shipment_date).slice(0, 10)}T00:00:00`
-                    ).getDay()]}
-                  </p>
                 </div>
 
-                <span className={getStatusClass(shipment.status)}>
-                  {getStatusLabel(shipment.status)}
-                </span>
-              </div>
+                <div className="shipment-card-details">
+                  <div>
+                    <span className="shipment-detail-label">Araç</span>
+                    <strong>{getVehicleName(shipment)}</strong>
+                  </div>
 
-              <div className="shipment-card-details">
-                <div>
-                  <span className="shipment-detail-label">Araç</span>
-                  <strong>{getVehicleName(shipment)}</strong>
+                  <div>
+                    <span className="shipment-detail-label">Personel</span>
+                    <strong>{getPersonnelNames(shipment)}</strong>
+                  </div>
                 </div>
 
-                <div>
-                  <span className="shipment-detail-label">Personel</span>
-                  <strong>{getPersonnelNames(shipment)}</strong>
-                </div>
-              </div>
-
-              <div className="shipment-card-actions">
-                <button
-                  className="shipment-button shipment-button-secondary"
-                  onClick={() => openAssignment(shipment)}
-                  disabled={busy || shipment.status === "CANCELLED"}
-                >
-                  Araç / Personel Ata
-                </button>
-
-                <label className="shipment-status-control">
-                  <span>Durumu</span>
-                  <select
-                    value={shipment.status}
-                    onChange={event =>
-                      updateStatus(shipment, event.target.value)
-                    }
-                    disabled={busy}
+                <div className="shipment-card-actions">
+                  <button
+                    className="shipment-button shipment-button-secondary"
+                    onClick={() => openAssignment(shipment)}
+                    disabled={busy || shipment.status === "CANCELLED"}
                   >
-                    {STATUS_OPTIONS.map(status => (
-                      <option key={status.value} value={status.value}>
-                        {status.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-            </article>
-          ))}
+                    Araç / Personel Ata
+                  </button>
+
+                  <label className="shipment-status-control">
+                    <span>Durumu</span>
+                    <select
+                      value={shipment.status}
+                      onChange={event =>
+                        updateStatus(shipment, event.target.value)
+                      }
+                      disabled={busy}
+                    >
+                      {STATUS_OPTIONS.map(status => (
+                        <option key={status.value} value={status.value}>
+                          {status.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              </article>
+            );
+          })}
         </div>
       )}
 
@@ -503,8 +552,8 @@ export default function AdminShipmentsPage({ session }) {
               ×
             </button>
 
-            <h3>Manuel Sevkiyat Oluştur</h3>
-            <p>Seçilen rotanın teslimat günlerinden bir tarih seçin.</p>
+            <h3>İstisnai Manuel Sevkiyat</h3>
+            <p>Normal rota takvimi dışında gerekli olduğunda sevkiyat oluşturun.</p>
 
             <form onSubmit={createShipment}>
               <label>

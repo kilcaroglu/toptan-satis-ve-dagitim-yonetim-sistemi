@@ -1,130 +1,99 @@
 
 /* GENEL SAYFA */
+
 .fleet-page {
   width: 100%;
-  color: #172033;
+  min-width: 0;
+  color: #263548;
+}
+
+.fleet-loading {
+  padding: 40px 20px;
+  text-align: center;
+  color: #64748b;
 }
 
 .fleet-page-header {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   gap: 16px;
-  flex-wrap: wrap;
   margin-bottom: 22px;
 }
 
 .fleet-page-header h1 {
-  margin: 0 0 6px;
-  font-size: 22px;
-  font-weight: 800;
+  margin: 0 0 7px;
+  color: #263548;
+  font-size: 25px;
 }
 
 .fleet-page-header p {
   margin: 0;
-  color: #748094;
-  font-size: 13px;
-}
-
-.fleet-loading {
-  padding: 40px;
-  text-align: center;
-  color: #748094;
-}
-
-/* GENEL BUTONLAR */
-.fleet-page button {
-  font-family: inherit;
-}
-
-.fleet-primary-button,
-.fleet-secondary-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  min-height: 38px;
-  padding: 10px 16px;
-  border: 0;
-  border-radius: 9px;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: 0.2s ease;
-}
-
-.fleet-primary-button {
-  color: white;
-  background: #2457d6;
-}
-
-.fleet-primary-button:hover {
-  background: #1945b4;
-}
-
-.fleet-secondary-button {
-  color: #334155;
-  background: #edf1f7;
-}
-
-.fleet-primary-button:disabled,
-.fleet-secondary-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+  color: #788494;
+  font-size: 14px;
 }
 
 /* HATA MESAJI */
+
 .fleet-error {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 12px 15px;
-  margin-bottom: 15px;
-  border-radius: 9px;
-  color: #b42318;
-  background: #fff0ef;
-  border: 1px solid #ffd2ce;
-  font-size: 13px;
+  padding: 13px 15px;
+  margin-bottom: 18px;
+  border-radius: 8px;
+  background: #fceaea;
+  color: #a53b3b;
+  font-size: 14px;
 }
 
 .fleet-error button {
   padding: 7px 12px;
-  border: 0;
-  border-radius: 7px;
-  background: #b42318;
-  color: white;
+  border: 1px solid #e5baba;
+  border-radius: 6px;
+  background: white;
+  color: #a53b3b;
   cursor: pointer;
 }
 
-/* SEKME BUTONLARI */
+/* SEKME ALANI */
+
 .fleet-tabs {
   display: flex;
   gap: 8px;
   margin-bottom: 20px;
-  border-bottom: 1px solid #e5eaf1;
+  border-bottom: 1px solid #e6eaf0;
 }
 
 .fleet-tabs button {
   padding: 12px 18px;
-  border: 0;
+  border: none;
   border-bottom: 3px solid transparent;
   background: transparent;
-  color: #778398;
-  font-size: 13px;
-  font-weight: 700;
+  color: #718096;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
 }
 
 .fleet-tabs button.active {
-  color: #2457d6;
-  border-bottom-color: #2457d6;
+  border-bottom-color: #245c48;
+  color: #245c48;
+}
+
+/* İÇERİK */
+
+.fleet-content {
+  width: 100%;
+  min-width: 0;
 }
 
 /* ÖZET KARTLARI */
+
 .fleet-summary {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 14px;
   margin-bottom: 22px;
 }
@@ -132,328 +101,402 @@
 .fleet-summary-card {
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  gap: 8px;
+  min-width: 0;
   padding: 18px;
+  border: 1px solid #e6eaf0;
+  border-radius: 10px;
   background: white;
-  border: 1px solid #e8edf4;
-  border-radius: 12px;
 }
 
 .fleet-summary-card span {
-  color: #758197;
-  font-size: 12px;
-}
-
-.fleet-summary-card strong {
-  color: #172033;
-  font-size: 25px;
-}
-
-/* ARAMA VE EKLEME ALANI */
-.fleet-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 17px;
-}
-
-.fleet-toolbar input {
-  width: min(400px, 100%);
-  min-width: 0;
-  padding: 12px 14px;
-  border: 1px solid #dce3ed;
-  border-radius: 9px;
-  outline: none;
+  color: #788494;
   font-size: 13px;
 }
 
-.fleet-toolbar input:focus {
-  border-color: #527be0;
-  box-shadow: 0 0 0 3px rgba(36, 87, 214, 0.1);
+.fleet-summary-card strong {
+  color: #263548;
+  font-size: 25px;
+}
+
+/* ARAMA VE BUTONLAR */
+
+.fleet-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.fleet-toolbar > input {
+  flex: 1;
+  min-width: 180px;
+  padding: 11px 13px;
+  border: 1px solid #d8dee8;
+  border-radius: 8px;
+  background: white;
+  font: inherit;
+  outline: none;
+}
+
+.fleet-toolbar > input:focus {
+  border-color: #568b78;
+  box-shadow: 0 0 0 3px rgba(36, 92, 72, 0.08);
+}
+
+.fleet-primary-button {
+  min-height: 42px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  background: #245c48;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s ease;
+}
+
+.fleet-primary-button:hover {
+  background: #194936;
+}
+
+.fleet-primary-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* PASİFLERİ GÖSTER / GİZLE */
+
+.fleet-filter-button {
+  min-height: 42px;
+  padding: 10px 14px;
+  border: 1px solid #d5dfda;
+  border-radius: 8px;
+  background: #f5faf7;
+  color: #245c48;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.fleet-filter-button:hover {
+  border-color: #245c48;
+  background: #e8f3ed;
+}
+
+.fleet-result-count {
+  margin: 0 0 12px;
+  color: #788494;
+  font-size: 12px;
 }
 
 /* TABLO */
+
 .fleet-table-wrapper {
   width: 100%;
   overflow-x: auto;
+  border: 1px solid #e6eaf0;
+  border-radius: 10px;
   background: white;
-  border: 1px solid #e8edf4;
-  border-radius: 12px;
 }
 
 .fleet-table {
   width: 100%;
+  min-width: 800px;
   border-collapse: collapse;
+}
+
+.fleet-table th,
+.fleet-table td {
+  padding: 14px 12px;
+  border-bottom: 1px solid #edf0f4;
   text-align: left;
+  font-size: 13px;
   white-space: nowrap;
 }
 
 .fleet-table th {
-  padding: 14px 16px;
-  background: #f7f9fc;
-  color: #748094;
-  font-size: 11px;
-  font-weight: 800;
+  background: #f7f9fb;
+  color: #687587;
+  font-weight: 600;
 }
 
 .fleet-table td {
-  padding: 15px 16px;
-  border-top: 1px solid #edf0f5;
-  color: #536176;
-  font-size: 12px;
+  color: #344256;
 }
 
-.fleet-table td strong {
-  color: #25334a;
+.fleet-table tbody tr:hover {
+  background: #fafcfb;
 }
 
-/* DURUM ETİKETLERİ */
+.fleet-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.fleet-empty {
+  padding: 35px 20px !important;
+  text-align: center !important;
+  color: #788494 !important;
+}
+
+/* AKTİF / PASİF DURUMU */
+
 .fleet-status {
   display: inline-block;
-  padding: 6px 10px;
+  padding: 5px 10px;
   border-radius: 20px;
-  font-size: 10px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .fleet-status.active {
-  color: #147447;
-  background: #e6f6ed;
+  background: #e4f4eb;
+  color: #247348;
 }
 
 .fleet-status.passive {
-  color: #9b5a22;
-  background: #fff1df;
+  background: #fceaea;
+  color: #a53b3b;
 }
 
-/* TABLO İŞLEM BUTONLARI */
+/* TABLO İŞLEMLERİ */
+
 .fleet-actions {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
   gap: 7px;
 }
 
 .fleet-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 32px;
-  padding: 7px 11px;
-  border: 1px solid transparent;
-  border-radius: 7px;
-  font-size: 11px;
-  font-weight: 700;
-  white-space: nowrap;
+  padding: 7px 10px;
+  border: 1px solid #dce2e9;
+  border-radius: 6px;
+  background: white;
+  font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
-  transition: 0.2s ease;
+  white-space: nowrap;
 }
 
 .fleet-button-edit {
-  color: #2457d6;
-  background: #edf3ff;
+  color: #245c48;
 }
 
 .fleet-button-edit:hover {
-  background: #dce8ff;
+  background: #edf6f1;
 }
 
 .fleet-button-danger {
-  color: #b91c1c;
-  background: #fee2e2;
-  border-color: #fecaca;
+  border-color: #f0cccc;
+  color: #a53b3b;
 }
 
 .fleet-button-danger:hover {
-  background: #fecaca;
+  background: #fceaea;
 }
 
 .fleet-button-success {
-  color: #15803d;
-  background: #dcfce7;
-  border-color: #bbf7d0;
+  border-color: #c6e5d1;
+  color: #247348;
 }
 
 .fleet-button-success:hover {
-  background: #bbf7d0;
+  background: #e4f4eb;
 }
 
 .fleet-button-cancel {
-  color: #475569;
-  background: #edf1f7;
+  padding: 10px 16px;
+  border-color: #dce2e9;
+  color: #526174;
 }
 
 .fleet-button-cancel:hover {
-  background: #dfe5ee;
+  background: #f5f7fa;
 }
 
-/* BOŞ LİSTE */
-.fleet-empty {
-  padding: 45px 20px !important;
-  text-align: center;
-  color: #758197 !important;
-  background: white;
-  font-size: 13px !important;
-}
+/* MODAL */
 
-/* MODAL ARKA PLANI */
 .fleet-modal-overlay {
   position: fixed;
   inset: 0;
   z-index: 1000;
   display: flex;
-  align-items: center;
   justify-content: center;
-  padding: 20px;
+  align-items: center;
+  padding: 18px;
   overflow-y: auto;
-  background: rgba(15, 23, 42, 0.58);
+  background: rgba(20, 30, 40, 0.55);
 }
 
-/* MODAL */
 .fleet-modal {
   position: relative;
-  width: min(550px, 100%);
-  max-height: calc(100vh - 40px);
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
   padding: 28px;
-  border-radius: 16px;
+  overflow-y: auto;
+  border-radius: 12px;
   background: white;
-  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.18);
 }
 
 .fleet-modal h2 {
-  margin: 0 45px 24px 0;
-  color: #172033;
+  margin: 0 35px 12px 0;
+  color: #263548;
   font-size: 21px;
-  font-weight: 800;
 }
 
-/* MODAL KAPATMA */
 .fleet-modal-close {
   position: absolute;
-  top: 17px;
-  right: 17px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 35px;
-  height: 35px;
-  padding: 0;
-  border: 0;
-  border-radius: 8px;
-  background: #f0f2f6;
-  color: #4b5563;
-  font-size: 24px;
+  top: 12px;
+  right: 15px;
+  z-index: 2;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: #687587;
+  font-size: 27px;
   line-height: 1;
   cursor: pointer;
 }
 
 .fleet-modal-close:hover {
-  background: #e2e6ed;
+  background: #f1f3f5;
+  color: #263548;
 }
 
 /* FORM ALANLARI */
+
 .fleet-modal form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
-.fleet-modal form > label {
+.fleet-modal label {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  color: #344054;
-  font-size: 12px;
-  font-weight: 700;
+  gap: 7px;
+  color: #435166;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .fleet-modal input,
 .fleet-modal select,
 .fleet-modal textarea {
-  width: 100%;
-  min-width: 0;
   box-sizing: border-box;
+  width: 100%;
   padding: 11px 12px;
-  border: 1px solid #dce3ed;
-  border-radius: 8px;
-  outline: none;
+  border: 1px solid #dce2e9;
+  border-radius: 7px;
   background: white;
-  color: #263247;
-  font-family: inherit;
+  color: #263548;
+  font: inherit;
   font-size: 13px;
-  font-weight: 400;
+  outline: none;
 }
 
 .fleet-modal input:focus,
 .fleet-modal select:focus,
 .fleet-modal textarea:focus {
-  border-color: #527be0;
-  box-shadow: 0 0 0 3px rgba(36, 87, 214, 0.1);
+  border-color: #568b78;
+  box-shadow: 0 0 0 3px rgba(36, 92, 72, 0.08);
 }
 
 .fleet-modal textarea {
   resize: vertical;
 }
 
-/* KAPASİTE VE BİRİM */
 .fleet-form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
-}
-
-.fleet-form-row label {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  color: #344054;
-  font-size: 12px;
-  font-weight: 700;
+  gap: 12px;
 }
 
 /* MODAL ALT BUTONLARI */
+
 .fleet-modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 9px;
-  margin-top: 8px;
-  padding-top: 17px;
-  border-top: 1px solid #edf0f5;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.fleet-modal-actions button {
+  min-height: 42px;
 }
 
 /* RESPONSIVE */
-@media (max-width: 900px) {
+
+@media (max-width: 750px) {
+  .fleet-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .fleet-toolbar > input {
+    flex-basis: 100%;
+  }
+
+  .fleet-toolbar > button {
+    flex: 1;
+  }
+
   .fleet-summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 650px) {
+@media (max-width: 520px) {
+  .fleet-page-header h1 {
+    font-size: 21px;
+  }
+
+  .fleet-tabs button {
+    flex: 1;
+    padding: 11px 8px;
+    font-size: 12px;
+  }
+
   .fleet-summary {
-    grid-template-columns: 1fr 1fr;
+    gap: 9px;
+  }
+
+  .fleet-summary-card {
+    padding: 13px;
+  }
+
+  .fleet-summary-card strong {
+    font-size: 22px;
   }
 
   .fleet-toolbar {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .fleet-toolbar input {
-    width: 100%;
-  }
-
-  .fleet-toolbar .fleet-primary-button {
-    width: 100%;
-  }
-
-  .fleet-actions {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .fleet-toolbar > input {
+    box-sizing: border-box;
+    width: 100%;
+    flex-basis: auto;
+  }
+
+  .fleet-toolbar > button {
+    width: 100%;
+    flex: auto;
   }
 
   .fleet-modal {
-    padding: 22px 18px;
+    padding: 24px 18px;
   }
 
   .fleet-form-row {
@@ -463,11 +506,5 @@
   .fleet-error {
     align-items: flex-start;
     flex-direction: column;
-  }
-}
-
-@media (max-width: 380px) {
-  .fleet-summary {
-    grid-template-columns: 1fr;
   }
 }
