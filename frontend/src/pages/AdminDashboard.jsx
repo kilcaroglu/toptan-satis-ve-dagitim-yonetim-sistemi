@@ -7,6 +7,7 @@ import AdminCustomersPage from "./AdminCustomersPage.jsx";
 import AdminShipmentsPage from "./AdminShipmentsPage.jsx";
 import AdminRoutesPage from "./AdminRoutesPage.jsx";
 import AdminFleetPage from "./AdminFleetPage.jsx";
+import AdminOrdersPage from "./AdminOrdersPage.jsx";
 
 const menuGroups = [
   {
@@ -240,6 +241,8 @@ export default function AdminDashboard({ session, onLogout }) {
             <AdminRoutesPage session={session} />
           ) : activePage === "fleet" ? (
             <AdminFleetPage session={session} />
+          ) : activePage === "orders" ? (
+            <AdminOrdersPage session={session} />
           ) : (
             <section className="admin-module">
               <div className="admin-module-icon" aria-hidden="true">

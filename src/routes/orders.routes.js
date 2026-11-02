@@ -1,8 +1,50 @@
+
 import express from "express";
 import pool from "../db.js";
-import { authMiddleware, roleMiddleware } from "../authMiddleware.js";
+import {
+  authMiddleware,
+  roleMiddleware,
+} from "../authMiddleware.js";
 
 const router = express.Router();
+
+const allowedTransitions = {
+  PENDING: ["APPROVED", "CANCELLED"],
+  APPROVED: ["PREPARING", "CANCELLED"],
+  PREPARING: ["ON_THE_WAY", "CANCELLED"],
+  ON_THE_WAY: ["DELIVERED"],
+  DELIVERED: [],
+  CANCELLED: [],
+};
+
+// Ürün miktarını kontrol et
+function validQuantity(value) {
+  const quantity = Number(value);
+  return Number.isFinite(quantity) && quantity > 0;
+}
+
+// Sipariş toplamını yeniden hesapla
+async function updateOrderTotal(client, orderId) {
+  const result = await client.query(
+    `UPDATE orders
+     SET total_amount = (
+       SELECT COALESCE(SUM(quantity * unit_price), 0)
+       FROM order_items
+       WHERE order_id = $1
+     ),
+     updated_at = NOW()
+     WHERE id = $1
+     RETURNING *`,
+    [orderId]
+  );
+
+  return result.rows[0];
+}
+
+// --------------------------------------------------
+// MÜŞTERİ SİPARİŞ OLUŞTURMA
+// POST /orders
+// --------------------------------------------------
 
 router.post(
   "/",
@@ -10,193 +52,209 @@ router.post(
   roleMiddleware("CUSTOMER"),
   async (req, res) => {
     const client = await pool.connect();
+    let transactionStarted = false;
 
     try {
       const { shipment_id, items } = req.body;
 
-      // Gelen bilgileri kontrol et
-      if (!shipment_id || !Array.isArray(items) || items.length === 0) {
+      if (
+        !shipment_id ||
+        !Array.isArray(items) ||
+        items.length === 0
+      ) {
         return res.status(400).json({
-          message: "Sevkiyat ve ürünler gereklidir",
+          message: "Sevkiyat ve ürün bilgileri gereklidir",
         });
       }
 
-      // Giriş yapan kullanıcının müşteri kaydını bul
+      await client.query("BEGIN");
+      transactionStarted = true;
+
       const customerResult = await client.query(
         `SELECT id, district_id
-                 FROM customers
-                 WHERE user_id = $1
-                   AND active = TRUE`,
-        [req.user.id],
+         FROM customers
+         WHERE user_id = $1
+           AND active = TRUE
+         FOR UPDATE`,
+        [req.user.id]
       );
 
       if (customerResult.rows.length === 0) {
-        return res.status(403).json({
+        await client.query("ROLLBACK");
+        transactionStarted = false;
+
+        return res.status(404).json({
           message: "Aktif müşteri kaydı bulunamadı",
         });
       }
 
       const customer = customerResult.rows[0];
 
-      await client.query("BEGIN");
-
-      // Sevkiyatın bu müşterinin ilçesine uygun olduğunu kontrol et
       const shipmentResult = await client.query(
         `SELECT
-            shipments.id,
-            shipments.shipment_date,
-            routes.id AS route_id,
-            route_schedules.delivery_day,
-            route_schedules.order_deadline_day,
-            route_schedules.order_deadline_time
-        FROM shipments
-        INNER JOIN routes
-            ON shipments.route_id = routes.id
-        INNER JOIN route_districts
-            ON routes.id = route_districts.route_id
-        INNER JOIN route_schedules
-            ON route_schedules.route_id = routes.id
-            AND route_schedules.delivery_day =
-                EXTRACT(ISODOW FROM shipments.shipment_date)::int
-            AND route_schedules.active = TRUE
-        WHERE shipments.id = $1
-          AND route_districts.district_id = $2
-          AND routes.active = TRUE
-          AND shipments.status = 'PLANNED'
-        FOR UPDATE OF shipments`,
-        [shipment_id, customer.district_id],
+            s.id,
+            s.shipment_date,
+            r.id AS route_id,
+            rs.order_deadline_day,
+            rs.order_deadline_time
+         FROM shipments s
+         INNER JOIN routes r
+           ON r.id = s.route_id
+         INNER JOIN route_districts rd
+           ON rd.route_id = r.id
+         INNER JOIN route_schedules rs
+           ON rs.route_id = r.id
+           AND rs.delivery_day =
+               EXTRACT(ISODOW FROM s.shipment_date)::int
+           AND rs.active = TRUE
+         WHERE s.id = $1
+           AND rd.district_id = $2
+           AND r.active = TRUE
+           AND s.status = 'PLANNED'
+         FOR UPDATE OF s`,
+        [shipment_id, customer.district_id]
       );
 
       if (shipmentResult.rows.length === 0) {
         await client.query("ROLLBACK");
+        transactionStarted = false;
 
         return res.status(400).json({
-          message: "Bu sevkiyat müşteriniz için uygun değil",
+          message:
+            "Bu sevkiyat müşterinizin ilçesine uygun değil veya siparişe kapalı",
         });
       }
 
       const shipment = shipmentResult.rows[0];
 
-      // Sipariş son tarihini kontrol et
+      // Müşteri sipariş son saati kontrolü
       const deadlineResult = await client.query(
         `SELECT
-                    (
-                        $1::date
-                        - (
-                            (
-                                $2::int
-                                - $3::int
-                                + 7
-                            ) % 7
-                        )
-                    ) AS deadline_date`,
+          (
+            (
+              $1::date
+              - (
+                  (
+                    EXTRACT(ISODOW FROM $1::date)::int
+                    - $2::int
+                    + 7
+                  ) % 7
+                )
+            )::date
+            + $3::time
+          ) AS deadline`,
         [
           shipment.shipment_date,
-          shipment.delivery_day,
           shipment.order_deadline_day,
-        ],
+          shipment.order_deadline_time,
+        ]
       );
 
-      const deadlineDate = deadlineResult.rows[0].deadline_date;
+      const deadline = deadlineResult.rows[0].deadline;
 
-      const deadlineCheck = await client.query(
-        `SELECT
-                    (
-                        ($1::date + $2::time)
-                        >=
-                        (now() AT TIME ZONE 'Europe/Istanbul')
-                    ) AS still_open`,
-        [deadlineDate, shipment.order_deadline_time],
+      const currentTimeResult = await client.query(
+        `SELECT NOW() AT TIME ZONE 'Europe/Istanbul' AS current_time`
       );
 
-      if (!deadlineCheck.rows[0].still_open) {
+      if (
+        new Date(currentTimeResult.rows[0].current_time) >
+        new Date(deadline)
+      ) {
         await client.query("ROLLBACK");
+        transactionStarted = false;
 
         return res.status(400).json({
-          message: "Bu sevkiyat için sipariş süresi dolmuş",
+          message: "Bu sevkiyat için sipariş verme süresi dolmuştur",
         });
       }
 
-      // Siparişi oluştur
       const orderResult = await client.query(
         `INSERT INTO orders
-                    (customer_id, shipment_id, status, total_amount)
-                 VALUES ($1, $2, 'PENDING', 0)
-                 RETURNING *`,
-        [customer.id, shipment.id],
+          (
+            customer_id,
+            shipment_id,
+            status,
+            total_amount,
+            order_source
+          )
+         VALUES ($1, $2, 'PENDING', 0, 'CUSTOMER')
+         RETURNING *`,
+        [customer.id, shipment_id]
       );
 
       const order = orderResult.rows[0];
-      let totalAmount = 0;
 
-      // Her ürünü ve sipariş anındaki fiyatını kaydet
       for (const item of items) {
-        const quantity = Number(item.quantity);
         const productId = Number(item.product_id);
+        const quantity = Number(item.quantity);
 
         if (
           !Number.isInteger(productId) ||
           productId <= 0 ||
-          !Number.isFinite(quantity) ||
-          quantity <= 0
+          !validQuantity(quantity)
         ) {
-          throw new Error("Ürün veya miktar geçersiz");
+          throw new Error("Ürün veya miktar bilgisi geçersiz");
         }
 
         const productResult = await client.query(
           `SELECT id, price
-                     FROM products
-                     WHERE id = $1
-                       AND active = TRUE`,
-          [productId],
+           FROM products
+           WHERE id = $1
+             AND active = TRUE`,
+          [productId]
         );
 
         if (productResult.rows.length === 0) {
-          throw new Error("Ürün bulunamadı veya pasif");
+          throw new Error("Ürün bulunamadı veya satışa kapalı");
         }
 
         const product = productResult.rows[0];
-        const unitPrice = Number(product.price);
 
         await client.query(
           `INSERT INTO order_items
-                        (order_id, product_id, quantity, unit_price)
-                     VALUES ($1, $2, $3, $4)`,
-          [order.id, product.id, quantity, unitPrice],
+            (order_id, product_id, quantity, unit_price)
+           VALUES ($1, $2, $3, $4)`,
+          [
+            order.id,
+            product.id,
+            quantity,
+            product.price,
+          ]
         );
-
-        totalAmount += quantity * unitPrice;
       }
 
-      // Sipariş toplamını kaydet
-      const updatedOrder = await client.query(
-        `UPDATE orders
-                 SET total_amount = $1,
-                     updated_at = now()
-                 WHERE id = $2
-                 RETURNING *`,
-        [totalAmount, order.id],
+      const updatedOrder = await updateOrderTotal(
+        client,
+        order.id
       );
 
       await client.query("COMMIT");
+      transactionStarted = false;
 
-      res.status(201).json({
+      return res.status(201).json({
         message: "Sipariş başarıyla oluşturuldu",
-        order: updatedOrder.rows[0],
+        order: updatedOrder,
       });
     } catch (error) {
-      await client.query("ROLLBACK");
+      if (transactionStarted) {
+        await client.query("ROLLBACK");
+      }
 
-      console.error(error);
+      console.error("Müşteri sipariş hatası:", error);
 
-      res.status(500).json({
-        message: "Sipariş oluşturulamadı",
+      return res.status(500).json({
+        message: error.message || "Sipariş oluşturulamadı",
       });
     } finally {
       client.release();
     }
-  },
+  }
 );
+
+// --------------------------------------------------
+// ADMİN SİPARİŞ LİSTELEME
+// GET /orders
+// --------------------------------------------------
 
 router.get(
   "/",
@@ -206,36 +264,221 @@ router.get(
     try {
       const result = await pool.query(
         `SELECT
-                    orders.id,
-                    orders.customer_id,
-                    customers.company_name,
-                    orders.shipment_id,
-                    shipments.shipment_date,
-                    routes.name AS route_name,
-                    orders.status,
-                    orders.total_amount,
-                    orders.created_at,
-                    orders.updated_at
-                 FROM orders
-                 INNER JOIN customers
-                    ON orders.customer_id = customers.id
-                 INNER JOIN shipments
-                    ON orders.shipment_id = shipments.id
-                 INNER JOIN routes
-                    ON shipments.route_id = routes.id
-                 ORDER BY orders.created_at DESC`,
+            o.id,
+            o.customer_id,
+            c.company_name,
+            c.contact_name,
+            c.phone,
+            o.shipment_id,
+            s.shipment_date,
+            r.name AS route_name,
+            o.status,
+            o.total_amount,
+            o.order_source,
+            o.created_by,
+            o.created_at,
+            o.updated_at
+         FROM orders o
+         INNER JOIN customers c
+           ON c.id = o.customer_id
+         INNER JOIN shipments s
+           ON s.id = o.shipment_id
+         INNER JOIN routes r
+           ON r.id = s.route_id
+         ORDER BY o.created_at DESC`
       );
 
-      res.json(result.rows);
+      return res.json(result.rows);
     } catch (error) {
-      console.error(error);
+      console.error("Sipariş listeleme hatası:", error);
 
-      res.status(500).json({
-        message: "Siparişler alınamadı",
+      return res.status(500).json({
+        message: "Siparişler getirilemedi",
       });
     }
-  },
+  }
 );
+
+// --------------------------------------------------
+// ADMİN MÜŞTERİ ADINA SİPARİŞ OLUŞTURMA
+// POST /orders/admin-create
+// Sipariş son saati kontrol edilmez.
+// --------------------------------------------------
+
+router.post(
+  "/admin-create",
+  authMiddleware,
+  roleMiddleware("ADMIN"),
+  async (req, res) => {
+    const client = await pool.connect();
+    let transactionStarted = false;
+
+    try {
+      const customerId = Number(req.body.customer_id);
+      const shipmentId = Number(req.body.shipment_id);
+      const { items } = req.body;
+
+      if (
+        !Number.isInteger(customerId) ||
+        customerId <= 0 ||
+        !Number.isInteger(shipmentId) ||
+        shipmentId <= 0 ||
+        !Array.isArray(items) ||
+        items.length === 0
+      ) {
+        return res.status(400).json({
+          message: "Müşteri, sevkiyat ve ürün bilgileri gereklidir",
+        });
+      }
+
+      await client.query("BEGIN");
+      transactionStarted = true;
+
+      const customerResult = await client.query(
+        `SELECT id, district_id
+         FROM customers
+         WHERE id = $1
+           AND active = TRUE
+         FOR UPDATE`,
+        [customerId]
+      );
+
+      if (customerResult.rows.length === 0) {
+        await client.query("ROLLBACK");
+        transactionStarted = false;
+
+        return res.status(404).json({
+          message: "Aktif müşteri bulunamadı",
+        });
+      }
+
+      const customer = customerResult.rows[0];
+
+      const shipmentResult = await client.query(
+        `SELECT
+            s.id,
+            s.shipment_date,
+            r.id AS route_id
+         FROM shipments s
+         INNER JOIN routes r
+           ON r.id = s.route_id
+         INNER JOIN route_districts rd
+           ON rd.route_id = r.id
+         INNER JOIN route_schedules rs
+           ON rs.route_id = r.id
+           AND rs.delivery_day =
+               EXTRACT(ISODOW FROM s.shipment_date)::int
+           AND rs.active = TRUE
+         WHERE s.id = $1
+           AND rd.district_id = $2
+           AND r.active = TRUE
+           AND s.status = 'PLANNED'
+         FOR UPDATE OF s`,
+        [shipmentId, customer.district_id]
+      );
+
+      if (shipmentResult.rows.length === 0) {
+        await client.query("ROLLBACK");
+        transactionStarted = false;
+
+        return res.status(400).json({
+          message:
+            "Seçilen sevkiyat müşterinin ilçesine uygun değil veya planlanmış durumda değil",
+        });
+      }
+
+      // Admin için sipariş son saati kontrolü uygulanmaz.
+
+      const orderResult = await client.query(
+        `INSERT INTO orders
+          (
+            customer_id,
+            shipment_id,
+            status,
+            total_amount,
+            order_source,
+            created_by
+          )
+         VALUES ($1, $2, 'PENDING', 0, 'ADMIN', $3)
+         RETURNING *`,
+        [customer.id, shipmentId, req.user.id]
+      );
+
+      const order = orderResult.rows[0];
+
+      for (const item of items) {
+        const productId = Number(item.product_id);
+        const quantity = Number(item.quantity);
+
+        if (
+          !Number.isInteger(productId) ||
+          productId <= 0 ||
+          !validQuantity(quantity)
+        ) {
+          throw new Error("Ürün veya miktar bilgisi geçersiz");
+        }
+
+        const productResult = await client.query(
+          `SELECT id, price
+           FROM products
+           WHERE id = $1
+             AND active = TRUE`,
+          [productId]
+        );
+
+        if (productResult.rows.length === 0) {
+          throw new Error(
+            `Ürün ID ${productId} bulunamadı veya pasif`
+          );
+        }
+
+        const product = productResult.rows[0];
+
+        await client.query(
+          `INSERT INTO order_items
+            (order_id, product_id, quantity, unit_price)
+           VALUES ($1, $2, $3, $4)`,
+          [
+            order.id,
+            product.id,
+            quantity,
+            product.price,
+          ]
+        );
+      }
+
+      const updatedOrder = await updateOrderTotal(
+        client,
+        order.id
+      );
+
+      await client.query("COMMIT");
+      transactionStarted = false;
+
+      return res.status(201).json({
+        message: "Müşteri adına sipariş başarıyla oluşturuldu",
+        order: updatedOrder,
+      });
+    } catch (error) {
+      if (transactionStarted) {
+        await client.query("ROLLBACK");
+      }
+
+      console.error("Admin sipariş oluşturma hatası:", error);
+
+      return res.status(500).json({
+        message: error.message || "Sipariş oluşturulamadı",
+      });
+    } finally {
+      client.release();
+    }
+  }
+);
+
+// --------------------------------------------------
+// ADMİN SİPARİŞ DURUMU DEĞİŞTİRME
+// PATCH /orders/:id/status
+// --------------------------------------------------
 
 router.patch(
   "/:id/status",
@@ -243,42 +486,32 @@ router.patch(
   roleMiddleware("ADMIN"),
   async (req, res) => {
     const client = await pool.connect();
+    let transactionStarted = false;
 
     try {
       const orderId = Number(req.params.id);
       const { status } = req.body;
 
-      const allowedStatuses = [
-        "PENDING",
-        "APPROVED",
-        "PREPARING",
-        "ON_THE_WAY",
-        "DELIVERED",
-        "CANCELLED",
-      ];
-
-      if (
-        !Number.isInteger(orderId) ||
-        orderId <= 0 ||
-        !allowedStatuses.includes(status)
-      ) {
+      if (!Number.isInteger(orderId) || orderId <= 0) {
         return res.status(400).json({
-          message: "Sipariş numarası veya durumu geçersiz",
+          message: "Geçersiz sipariş numarası",
         });
       }
 
       await client.query("BEGIN");
+      transactionStarted = true;
 
       const orderResult = await client.query(
-        `SELECT id, customer_id, total_amount, status, stock_deducted
-                 FROM orders
-                 WHERE id = $1
-                 FOR UPDATE`,
-        [orderId],
+        `SELECT *
+         FROM orders
+         WHERE id = $1
+         FOR UPDATE`,
+        [orderId]
       );
 
       if (orderResult.rows.length === 0) {
         await client.query("ROLLBACK");
+        transactionStarted = false;
 
         return res.status(404).json({
           message: "Sipariş bulunamadı",
@@ -287,187 +520,174 @@ router.patch(
 
       const order = orderResult.rows[0];
 
-      const allowedTransitions = {
-        PENDING: ["APPROVED", "CANCELLED"],
-        APPROVED: ["PREPARING", "CANCELLED"],
-        PREPARING: ["ON_THE_WAY", "CANCELLED"],
-        ON_THE_WAY: ["DELIVERED"],
-        DELIVERED: [],
-        CANCELLED: [],
-      };
+      const allowed = allowedTransitions[order.status] || [];
 
-      if (!allowedTransitions[order.status].includes(status)) {
+      if (!allowed.includes(status)) {
         await client.query("ROLLBACK");
+        transactionStarted = false;
 
         return res.status(400).json({
-          message: `Sipariş durumu ${order.status} durumundan ${status} durumuna geçirilemez`,
+          message: "Bu sipariş durumuna geçiş yapılamaz",
         });
       }
 
-      if (order.status === status) {
-        await client.query("COMMIT");
-
-        return res.json({
-          message: "Sipariş zaten bu durumda",
-          order,
-        });
-      }
-
-      // Sipariş onaylanırken stoktan düş.
-      if (status === "APPROVED" && !order.stock_deducted) {
+      // Sipariş onaylandığında stokları düş.
+      if (status === "APPROVED") {
         const itemsResult = await client.query(
-          `SELECT product_id, quantity
-                     FROM order_items
-                     WHERE order_id = $1`,
-          [orderId],
+          `SELECT
+              oi.product_id,
+              oi.quantity,
+              p.stock,
+              p.name AS product_name
+           FROM order_items oi
+           INNER JOIN products p
+             ON p.id = oi.product_id
+           WHERE oi.order_id = $1
+           FOR UPDATE OF p`,
+          [orderId]
         );
 
         if (itemsResult.rows.length === 0) {
-          await client.query("ROLLBACK");
-
-          return res.status(400).json({
-            message: "Ürünü olmayan sipariş onaylanamaz",
-          });
+          throw new Error("Siparişte ürün bulunmuyor");
         }
 
         for (const item of itemsResult.rows) {
-          const stockResult = await client.query(
-            `UPDATE products
-                         SET stock = stock - $1,
-                             updated_at = now()
-                         WHERE id = $2
-                           AND active = TRUE
-                           AND stock >= $1
-                         RETURNING id`,
-            [item.quantity, item.product_id],
-          );
-
-          if (stockResult.rows.length === 0) {
-            await client.query("ROLLBACK");
-
-            return res.status(400).json({
-              message: `Ürün ID ${item.product_id} için stok yetersiz veya ürün pasif`,
-            });
+          if (Number(item.stock) < Number(item.quantity)) {
+            throw new Error(
+              `${item.product_name} ürünü için yeterli stok bulunmuyor`
+            );
           }
-        }
 
-        await client.query(
-          `UPDATE orders
-                     SET stock_deducted = TRUE
-                     WHERE id = $1`,
-          [orderId],
-        );
+          await client.query(
+            `UPDATE products
+             SET stock = stock - $1
+             WHERE id = $2`,
+            [item.quantity, item.product_id]
+          );
+        }
       }
 
-      // Stok daha önce düşülmüşse iptal sırasında geri ekle.
-      if (status === "CANCELLED" && order.stock_deducted) {
+      // Onaylanmış sipariş iptal edilirse stokları iade et.
+      if (status === "CANCELLED" &&
+          ["APPROVED", "PREPARING"].includes(order.status)) {
         const itemsResult = await client.query(
           `SELECT product_id, quantity
-                     FROM order_items
-                     WHERE order_id = $1`,
-          [orderId],
+           FROM order_items
+           WHERE order_id = $1`,
+          [orderId]
         );
 
         for (const item of itemsResult.rows) {
           await client.query(
             `UPDATE products
-                         SET stock = stock + $1,
-                             updated_at = now()
-                         WHERE id = $2`,
-            [item.quantity, item.product_id],
+             SET stock = stock + $1
+             WHERE id = $2`,
+            [item.quantity, item.product_id]
           );
         }
-
-        await client.query(
-          `UPDATE orders
-                     SET stock_deducted = FALSE
-                     WHERE id = $1`,
-          [orderId],
-        );
       }
 
-      // Sipariş teslim edildiğinde müşteri cari hesabına borç ekle.
+      // Teslim edildiğinde müşteri cari hesabına borç yaz.
       if (status === "DELIVERED") {
         await client.query(
           `INSERT INTO current_account_transactions
-                  (customer_id, order_id, transaction_type, amount, description, created_by)
-                  VALUES ($1, $2, 'DEBIT', $3, $4, $5)`,
+            (
+              customer_id,
+              transaction_type,
+              amount,
+              description,
+              order_id,
+              created_by
+            )
+           VALUES ($1, 'DEBIT', $2, $3, $4, $5)`,
           [
             order.customer_id,
-            orderId,
             order.total_amount,
-            `Teslim edilen sipariş #${orderId}`,
+            `Sipariş #${order.id} teslim edildi`,
+            order.id,
             req.user.id,
-          ],
+          ]
         );
       }
 
-      const result = await client.query(
+      const updatedResult = await client.query(
         `UPDATE orders
-                 SET status = $1,
-                     updated_at = now()
-                 WHERE id = $2
-                 RETURNING *`,
-        [status, orderId],
+         SET status = $1,
+             updated_at = NOW()
+         WHERE id = $2
+         RETURNING *`,
+        [status, orderId]
       );
 
       await client.query("COMMIT");
+      transactionStarted = false;
 
-      res.json({
+      return res.json({
         message: "Sipariş durumu güncellendi",
-        order: result.rows[0],
+        order: updatedResult.rows[0],
       });
     } catch (error) {
-      await client.query("ROLLBACK");
+      if (transactionStarted) {
+        await client.query("ROLLBACK");
+      }
 
-      console.error(error);
+      console.error("Sipariş durum güncelleme hatası:", error);
 
-      res.status(500).json({
-        message: "Sipariş durumu güncellenemedi",
+      return res.status(500).json({
+        message: error.message || "Sipariş durumu güncellenemedi",
       });
     } finally {
       client.release();
     }
-  },
+  }
 );
 
+// --------------------------------------------------
+// SİPARİŞ ÜRÜNLERİNİ GETİRME
+// GET /orders/:id/items
+// --------------------------------------------------
+
 router.get(
-  "/orders/:id/items",
+  "/:id/items",
   authMiddleware,
   roleMiddleware("ADMIN"),
   async (req, res) => {
     try {
-      const { id } = req.params;
+      const orderId = Number(req.params.id);
 
       const result = await pool.query(
         `SELECT
-                    order_items.id,
-                    order_items.order_id,
-                    order_items.product_id,
-                    products.name AS product_name,
-                    products.min_unit_label,
-                    order_items.quantity,
-                    order_items.unit_price,
-                    order_items.quantity * order_items.unit_price
-                        AS line_total
-                 FROM order_items
-                 INNER JOIN products
-                    ON order_items.product_id = products.id
-                 WHERE order_items.order_id = $1
-                 ORDER BY order_items.id`,
-        [id],
+            oi.id,
+            oi.order_id,
+            oi.product_id,
+            p.name AS product_name,
+            p.min_unit_label,
+            oi.quantity,
+            oi.unit_price,
+            oi.quantity * oi.unit_price AS line_total
+         FROM order_items oi
+         INNER JOIN products p
+           ON p.id = oi.product_id
+         WHERE oi.order_id = $1
+         ORDER BY oi.id`,
+        [orderId]
       );
 
-      res.json(result.rows);
+      return res.json(result.rows);
     } catch (error) {
-      console.error(error);
+      console.error("Sipariş ürünleri hatası:", error);
 
-      res.status(500).json({
-        message: "Sipariş ürünleri alınamadı",
+      return res.status(500).json({
+        message: "Sipariş ürünleri getirilemedi",
       });
     }
-  },
+  }
 );
+
+// --------------------------------------------------
+// SİPARİŞTEKİ ÜRÜN MİKTARINI GÜNCELLEME
+// PATCH /orders/:orderId/items/:itemId
+// --------------------------------------------------
 
 router.patch(
   "/:orderId/items/:itemId",
@@ -482,16 +702,9 @@ router.patch(
       const itemId = Number(req.params.itemId);
       const quantity = Number(req.body.quantity);
 
-      if (
-        !Number.isInteger(orderId) ||
-        orderId <= 0 ||
-        !Number.isInteger(itemId) ||
-        itemId <= 0 ||
-        !Number.isFinite(quantity) ||
-        quantity <= 0
-      ) {
+      if (!validQuantity(quantity)) {
         return res.status(400).json({
-          message: "Sipariş, ürün veya miktar bilgisi geçersiz",
+          message: "Geçerli bir miktar giriniz",
         });
       }
 
@@ -499,136 +712,97 @@ router.patch(
       transactionStarted = true;
 
       const orderResult = await client.query(
-        `SELECT id, status, stock_deducted
-                 FROM orders
-                 WHERE id = $1
-                 FOR UPDATE`,
-        [orderId],
+        `SELECT *
+         FROM orders
+         WHERE id = $1
+         FOR UPDATE`,
+        [orderId]
       );
 
       if (orderResult.rows.length === 0) {
-        await client.query("ROLLBACK");
-        transactionStarted = false;
-
-        return res.status(404).json({
-          message: "Sipariş bulunamadı",
-        });
+        throw new Error("Sipariş bulunamadı");
       }
 
       const order = orderResult.rows[0];
 
       if (["DELIVERED", "CANCELLED"].includes(order.status)) {
-        await client.query("ROLLBACK");
-        transactionStarted = false;
-
-        return res.status(400).json({
-          message: "Tamamlanmış veya iptal edilmiş sipariş düzenlenemez",
-        });
+        throw new Error(
+          "Teslim edilmiş veya iptal edilmiş sipariş düzenlenemez"
+        );
       }
 
       const itemResult = await client.query(
-        `SELECT id, product_id, quantity
-                 FROM order_items
-                 WHERE id = $1 AND order_id = $2
-                 FOR UPDATE`,
-        [itemId, orderId],
+        `SELECT oi.*, p.stock
+         FROM order_items oi
+         INNER JOIN products p
+           ON p.id = oi.product_id
+         WHERE oi.id = $1
+           AND oi.order_id = $2
+         FOR UPDATE OF oi, p`,
+        [itemId, orderId]
       );
 
       if (itemResult.rows.length === 0) {
-        await client.query("ROLLBACK");
-        transactionStarted = false;
-
-        return res.status(404).json({
-          message: "Sipariş ürünü bulunamadı",
-        });
+        throw new Error("Sipariş ürünü bulunamadı");
       }
 
       const item = itemResult.rows[0];
       const oldQuantity = Number(item.quantity);
       const difference = quantity - oldQuantity;
 
-      // Stok daha önce düşülmüşse aradaki farkı ayarla.
-      if (order.stock_deducted && difference !== 0) {
-        if (difference > 0) {
-          // Miktar artıyor: ek stok yeterli mi?
-          const stockResult = await client.query(
-            `UPDATE products
-                         SET stock = stock - $1,
-                             updated_at = now()
-                         WHERE id = $2
-                           AND active = TRUE
-                           AND stock >= $1
-                         RETURNING id`,
-            [difference, item.product_id],
-          );
-
-          if (stockResult.rows.length === 0) {
-            await client.query("ROLLBACK");
-            transactionStarted = false;
-
-            return res.status(400).json({
-              message: "Ek miktar için stok yetersiz veya ürün pasif",
-            });
-          }
-        } else {
-          // Miktar azalıyor: kullanılmayan stoğu geri ekle.
-          await client.query(
-            `UPDATE products
-                         SET stock = stock + $1,
-                             updated_at = now()
-                         WHERE id = $2`,
-            [-difference, item.product_id],
-          );
+      // Sipariş onaylandıysa stok farkını uygula.
+      if (["APPROVED", "PREPARING", "ON_THE_WAY"].includes(order.status)) {
+        if (difference > 0 && Number(item.stock) < difference) {
+          throw new Error("Yeterli stok bulunmuyor");
         }
+
+        await client.query(
+          `UPDATE products
+           SET stock = stock - $1
+           WHERE id = $2`,
+          [difference, item.product_id]
+        );
       }
 
-      const updatedItem = await client.query(
+      await client.query(
         `UPDATE order_items
-                 SET quantity = $1
-                 WHERE id = $2 AND order_id = $3
-                 RETURNING *`,
-        [quantity, itemId, orderId],
+         SET quantity = $1
+         WHERE id = $2`,
+        [quantity, itemId]
       );
 
-      const totalResult = await client.query(
-        `UPDATE orders
-                 SET total_amount = (
-                    SELECT COALESCE(
-                        SUM(quantity * unit_price),
-                        0
-                    )
-                    FROM order_items
-                    WHERE order_id = $1
-                 ),
-                 updated_at = now()
-                 WHERE id = $1
-                 RETURNING total_amount`,
-        [orderId],
+      const updatedOrder = await updateOrderTotal(
+        client,
+        orderId
       );
 
       await client.query("COMMIT");
       transactionStarted = false;
 
-      res.json({
-        message: "Sipariş miktarı ve toplam tutar güncellendi",
-        item: updatedItem.rows[0],
-        total_amount: totalResult.rows[0].total_amount,
+      return res.json({
+        message: "Ürün miktarı güncellendi",
+        order: updatedOrder,
       });
     } catch (error) {
       if (transactionStarted) {
         await client.query("ROLLBACK");
       }
 
-      console.error(error);
+      console.error("Ürün miktarı güncelleme hatası:", error);
 
-      res.status(500).json({
-        message: "Sipariş miktarı güncellenemedi",
+      return res.status(400).json({
+        message: error.message || "Ürün miktarı güncellenemedi",
       });
     } finally {
       client.release();
     }
-  },
+  }
 );
+
+// --------------------------------------------------
+// SİPARİŞE YENİ ÜRÜN EKLEME
+// POST /orders/:id/items
+// --------------------------------------------------
 
 router.post(
   "/:id/items",
@@ -644,15 +818,12 @@ router.post(
       const quantity = Number(req.body.quantity);
 
       if (
-        !Number.isInteger(orderId) ||
-        orderId <= 0 ||
         !Number.isInteger(productId) ||
         productId <= 0 ||
-        !Number.isFinite(quantity) ||
-        quantity <= 0
+        !validQuantity(quantity)
       ) {
         return res.status(400).json({
-          message: "Sipariş, ürün veya miktar bilgileri geçersiz",
+          message: "Ürün ve miktar bilgileri geçersiz",
         });
       }
 
@@ -660,123 +831,90 @@ router.post(
       transactionStarted = true;
 
       const orderResult = await client.query(
-        `SELECT id, status, stock_deducted
-                 FROM orders
-                 WHERE id = $1
-                 FOR UPDATE`,
-        [orderId],
+        `SELECT *
+         FROM orders
+         WHERE id = $1
+         FOR UPDATE`,
+        [orderId]
       );
 
       if (orderResult.rows.length === 0) {
-        await client.query("ROLLBACK");
-        transactionStarted = false;
-
-        return res.status(404).json({
-          message: "Sipariş bulunamadı",
-        });
+        throw new Error("Sipariş bulunamadı");
       }
 
       const order = orderResult.rows[0];
 
       if (["DELIVERED", "CANCELLED"].includes(order.status)) {
-        await client.query("ROLLBACK");
-        transactionStarted = false;
-
-        return res.status(400).json({
-          message: "Bu siparişe ürün eklenemez",
-        });
+        throw new Error("Bu siparişe ürün eklenemez");
       }
 
       const productResult = await client.query(
-        `SELECT id, price
-                 FROM products
-                 WHERE id = $1
-                   AND active = TRUE`,
-        [productId],
+        `SELECT id, price, stock
+         FROM products
+         WHERE id = $1
+           AND active = TRUE
+         FOR UPDATE`,
+        [productId]
       );
 
       if (productResult.rows.length === 0) {
-        await client.query("ROLLBACK");
-        transactionStarted = false;
-
-        return res.status(404).json({
-          message: "Ürün bulunamadı veya pasif",
-        });
+        throw new Error("Ürün bulunamadı veya pasif");
       }
 
       const product = productResult.rows[0];
 
-      // Siparişin stoğu daha önce düşüldüyse,
-      // eklenen ürünün stoğunu da düş.
-      if (order.stock_deducted) {
-        const stockResult = await client.query(
-          `UPDATE products
-                     SET stock = stock - $1,
-                         updated_at = now()
-                     WHERE id = $2
-                       AND active = TRUE
-                       AND stock >= $1
-                     RETURNING id`,
-          [quantity, product.id],
-        );
-
-        if (stockResult.rows.length === 0) {
-          await client.query("ROLLBACK");
-          transactionStarted = false;
-
-          return res.status(400).json({
-            message: "Ürün stoğu yetersiz veya ürün pasif",
-          });
+      if (["APPROVED", "PREPARING", "ON_THE_WAY"].includes(order.status)) {
+        if (Number(product.stock) < quantity) {
+          throw new Error("Yeterli stok bulunmuyor");
         }
+
+        await client.query(
+          `UPDATE products
+           SET stock = stock - $1
+           WHERE id = $2`,
+          [quantity, productId]
+        );
       }
 
-      const itemResult = await client.query(
+      await client.query(
         `INSERT INTO order_items
-                    (order_id, product_id, quantity, unit_price)
-                 VALUES ($1, $2, $3, $4)
-                 RETURNING *`,
-        [orderId, product.id, quantity, product.price],
+          (order_id, product_id, quantity, unit_price)
+         VALUES ($1, $2, $3, $4)`,
+        [orderId, productId, quantity, product.price]
       );
 
-      const totalResult = await client.query(
-        `UPDATE orders
-                 SET total_amount = (
-                    SELECT COALESCE(
-                        SUM(quantity * unit_price),
-                        0
-                    )
-                    FROM order_items
-                    WHERE order_id = $1
-                 ),
-                 updated_at = now()
-                 WHERE id = $1
-                 RETURNING total_amount`,
-        [orderId],
+      const updatedOrder = await updateOrderTotal(
+        client,
+        orderId
       );
 
       await client.query("COMMIT");
       transactionStarted = false;
 
-      res.status(201).json({
+      return res.status(201).json({
         message: "Ürün siparişe eklendi",
-        item: itemResult.rows[0],
-        total_amount: totalResult.rows[0].total_amount,
+        order: updatedOrder,
       });
     } catch (error) {
       if (transactionStarted) {
         await client.query("ROLLBACK");
       }
 
-      console.error(error);
+      console.error("Siparişe ürün ekleme hatası:", error);
 
-      res.status(500).json({
-        message: "Siparişe ürün eklenemedi",
+      return res.status(400).json({
+        message: error.message || "Ürün eklenemedi",
       });
     } finally {
       client.release();
     }
-  },
+  }
 );
+
+// --------------------------------------------------
+// SİPARİŞTEN ÜRÜN SİLME
+// DELETE /orders/:orderId/items/:itemId
+// --------------------------------------------------
 
 router.delete(
   "/:orderId/items/:itemId",
@@ -790,95 +928,64 @@ router.delete(
       const orderId = Number(req.params.orderId);
       const itemId = Number(req.params.itemId);
 
-      if (
-        !Number.isInteger(orderId) ||
-        orderId <= 0 ||
-        !Number.isInteger(itemId) ||
-        itemId <= 0
-      ) {
-        return res.status(400).json({
-          message: "Geçersiz sipariş veya ürün satırı ID'si",
-        });
-      }
-
       await client.query("BEGIN");
       transactionStarted = true;
 
       const orderResult = await client.query(
-        `SELECT id, status, stock_deducted
-                 FROM orders
-                 WHERE id = $1
-                 FOR UPDATE`,
-        [orderId],
+        `SELECT *
+         FROM orders
+         WHERE id = $1
+         FOR UPDATE`,
+        [orderId]
       );
 
       if (orderResult.rows.length === 0) {
-        await client.query("ROLLBACK");
-        transactionStarted = false;
-
-        return res.status(404).json({
-          message: "Sipariş bulunamadı",
-        });
+        throw new Error("Sipariş bulunamadı");
       }
 
       const order = orderResult.rows[0];
 
       if (["DELIVERED", "CANCELLED"].includes(order.status)) {
-        await client.query("ROLLBACK");
-        transactionStarted = false;
-
-        return res.status(400).json({
-          message: "Teslim edilmiş veya iptal edilmiş sipariş değiştirilemez",
-        });
+        throw new Error("Bu siparişten ürün silinemez");
       }
 
       const itemResult = await client.query(
-        `SELECT id, product_id, quantity
-                 FROM order_items
-                 WHERE id = $1 AND order_id = $2
-                 FOR UPDATE`,
-        [itemId, orderId],
+        `SELECT oi.*, p.stock
+         FROM order_items oi
+         INNER JOIN products p
+           ON p.id = oi.product_id
+         WHERE oi.id = $1
+           AND oi.order_id = $2
+         FOR UPDATE OF oi, p`,
+        [itemId, orderId]
       );
 
       if (itemResult.rows.length === 0) {
-        await client.query("ROLLBACK");
-        transactionStarted = false;
-
-        return res.status(404).json({
-          message: "Sipariş ürün satırı bulunamadı",
-        });
+        throw new Error("Sipariş ürünü bulunamadı");
       }
 
       const item = itemResult.rows[0];
 
-      // Siparişin stoğu daha önce düşüldüyse ürünü stoğa geri ekle.
-      if (order.stock_deducted) {
+      // Onaylanmış siparişten ürün silinirse stoğu iade et.
+      if (["APPROVED", "PREPARING", "ON_THE_WAY"].includes(order.status)) {
         await client.query(
           `UPDATE products
-                     SET stock = stock + $1,
-                         updated_at = NOW()
-                     WHERE id = $2`,
-          [item.quantity, item.product_id],
+           SET stock = stock + $1
+           WHERE id = $2`,
+          [item.quantity, item.product_id]
         );
       }
 
       await client.query(
         `DELETE FROM order_items
-                 WHERE id = $1 AND order_id = $2`,
-        [itemId, orderId],
+         WHERE id = $1
+           AND order_id = $2`,
+        [itemId, orderId]
       );
 
-      const totalResult = await client.query(
-        `UPDATE orders
-                 SET total_amount = (
-                     SELECT COALESCE(SUM(quantity * unit_price), 0)
-                     FROM order_items
-                     WHERE order_id = $1
-                 ),
-                 updated_at = NOW()
-                 WHERE id = $1
-                 RETURNING total_amount`,
-        [orderId],
+      const updatedOrder = await updateOrderTotal(
+        client,
+        orderId
       );
 
       await client.query("COMMIT");
@@ -886,25 +993,22 @@ router.delete(
 
       return res.json({
         message: "Ürün siparişten silindi",
-        order_id: orderId,
-        deleted_item_id: itemId,
-        stock_returned: order.stock_deducted,
-        total_amount: totalResult.rows[0].total_amount,
+        order: updatedOrder,
       });
     } catch (error) {
       if (transactionStarted) {
         await client.query("ROLLBACK");
       }
 
-      console.error("Sipariş ürün silme hatası:", error);
+      console.error("Siparişten ürün silme hatası:", error);
 
-      return res.status(500).json({
-        message: "Sunucu hatası",
+      return res.status(400).json({
+        message: error.message || "Ürün silinemedi",
       });
     } finally {
       client.release();
     }
-  },
+  }
 );
 
 export default router;
