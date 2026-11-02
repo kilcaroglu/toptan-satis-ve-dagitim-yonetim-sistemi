@@ -8,6 +8,7 @@ import AdminShipmentsPage from "./AdminShipmentsPage.jsx";
 import AdminRoutesPage from "./AdminRoutesPage.jsx";
 import AdminFleetPage from "./AdminFleetPage.jsx";
 import AdminOrdersPage from "./AdminOrdersPage.jsx";
+import AdminAccountsPage from "./AdminAccountsPage.jsx";
 
 const menuGroups = [
   {
@@ -33,6 +34,10 @@ const menuGroups = [
       { id: "routes", label: "Rota ve Bölgeler", icon: "⌖" },
       { id: "fleet", label: "Araç ve Personel", icon: "♙" },
     ],
+  },
+  {
+    title: "SİSTEM YÖNETİMİ",
+    items: [{ id: "accounts", label: "Hesap ve Yetki Yönetimi", icon: "⚙" }],
   },
 ];
 
@@ -75,6 +80,11 @@ const pageInfo = {
     title: "Araç ve Personel",
     description:
       "Araçları, şoförleri ve dağıtım personelini tek yerden yönetin.",
+  },
+  accounts: {
+    title: "Hesap ve Yetki Yönetimi",
+    description:
+      "Yönetici hesaplarını, kullanıcı şifrelerini ve sistem erişimlerini yönetin.",
   },
 };
 
@@ -243,6 +253,8 @@ export default function AdminDashboard({ session, onLogout }) {
             <AdminFleetPage session={session} />
           ) : activePage === "orders" ? (
             <AdminOrdersPage session={session} />
+          ) : activePage === "accounts" ? (
+            <AdminAccountsPage session={session} />
           ) : (
             <section className="admin-module">
               <div className="admin-module-icon" aria-hidden="true">

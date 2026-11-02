@@ -20,6 +20,7 @@ import shipmentsRoutes from "./routes/shipments.routes.js";
 import districtsRoutes from "./routes/districts.routes.js";
 import currentAccountRoutes from "./routes/current-account.routes.js";
 import vehiclesRoutes from "./routes/vehicles.routes.js";
+import adminAccountsRoutes from "./routes/admin-accounts.routes.js";
 
 const app = express();
 
@@ -42,6 +43,7 @@ app.use("/shipments", shipmentsRoutes);
 app.use("/districts", districtsRoutes);
 app.use("/customers", currentAccountRoutes);
 app.use("/vehicles", vehiclesRoutes);
+app.use("/admin/accounts", adminAccountsRoutes);
 
 app.get("/", (req, res) => {
   res.json({

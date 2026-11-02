@@ -11,7 +11,7 @@ export async function login(email, password) {
 
     const user = result.rows[0];
 
-    if (!user) {
+    if (!user || !user.active) {
         return null;
     }
 
