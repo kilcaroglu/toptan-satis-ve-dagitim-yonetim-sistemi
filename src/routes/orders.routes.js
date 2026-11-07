@@ -41,6 +41,50 @@ async function updateOrderTotal(client, orderId) {
   return result.rows[0];
 }
 
+
+// --------------------------------------------------
+// MÜŞTERİNİN TESLİMAT GÜNLERİNİ GETİRME
+// GET /orders/delivery-days
+// --------------------------------------------------
+
+router.get(
+  "/delivery-days",
+  authMiddleware,
+  roleMiddleware("CUSTOMER"),
+  async (req, res) => {
+    try {
+      const result = await pool.query(
+        `SELECT DISTINCT rs.delivery_day
+         FROM customers c
+         INNER JOIN route_districts rd
+           ON rd.district_id = c.district_id
+         INNER JOIN routes r
+           ON r.id = rd.route_id
+         INNER JOIN route_schedules rs
+           ON rs.route_id = r.id
+         WHERE c.user_id = $1
+           AND c.active = TRUE
+           AND r.active = TRUE
+           AND rs.active = TRUE
+         ORDER BY rs.delivery_day`,
+        [req.user.id]
+      );
+
+      return res.json({
+        delivery_days: result.rows.map(
+          row => Number(row.delivery_day)
+        ),
+      });
+    } catch (error) {
+      console.error("Teslimat günleri hatası:", error);
+
+      return res.status(500).json({
+        message: "Teslimat günleri getirilemedi",
+      });
+    }
+  }
+);
+
 // --------------------------------------------------
 // MÜŞTERİ SİPARİŞ OLUŞTURMA
 // POST /orders
@@ -55,15 +99,11 @@ router.post(
     let transactionStarted = false;
 
     try {
-      const { shipment_id, items } = req.body;
+      const { items } = req.body;
 
-      if (
-        !shipment_id ||
-        !Array.isArray(items) ||
-        items.length === 0
-      ) {
+      if (!Array.isArray(items) || items.length === 0) {
         return res.status(400).json({
-          message: "Sevkiyat ve ürün bilgileri gereklidir",
+          message: "Sipariş için en az bir ürün gereklidir",
         });
       }
 
@@ -90,13 +130,12 @@ router.post(
 
       const customer = customerResult.rows[0];
 
+      // Müşterinin ilçesine uygun ilk siparişe açık sevkiyatı bul.
       const shipmentResult = await client.query(
         `SELECT
             s.id,
             s.shipment_date,
-            r.id AS route_id,
-            rs.order_deadline_day,
-            rs.order_deadline_time
+            r.id AS route_id
          FROM shipments s
          INNER JOIN routes r
            ON r.id = s.route_id
@@ -107,12 +146,30 @@ router.post(
            AND rs.delivery_day =
                EXTRACT(ISODOW FROM s.shipment_date)::int
            AND rs.active = TRUE
-         WHERE s.id = $1
-           AND rd.district_id = $2
+         WHERE rd.district_id = $1
            AND r.active = TRUE
            AND s.status = 'PLANNED'
+           AND s.shipment_date::date >=
+               (NOW() AT TIME ZONE 'Europe/Istanbul')::date
+           AND (
+             (
+               (
+                 s.shipment_date::date
+                 - (
+                     (
+                       EXTRACT(ISODOW FROM s.shipment_date)::int
+                       - rs.order_deadline_day::int
+                       + 7
+                     ) % 7
+                   )
+               )::date
+               + rs.order_deadline_time
+             ) AT TIME ZONE 'Europe/Istanbul'
+           ) > NOW()
+         ORDER BY s.shipment_date ASC, s.id ASC
+         LIMIT 1
          FOR UPDATE OF s`,
-        [shipment_id, customer.district_id]
+        [customer.district_id]
       );
 
       if (shipmentResult.rows.length === 0) {
@@ -121,53 +178,13 @@ router.post(
 
         return res.status(400).json({
           message:
-            "Bu sevkiyat müşterinizin ilçesine uygun değil veya siparişe kapalı",
+            "İlçeniz için şu anda sipariş verilebilecek uygun bir sevkiyat bulunmuyor.",
         });
       }
 
       const shipment = shipmentResult.rows[0];
 
-      // Müşteri sipariş son saati kontrolü
-      const deadlineResult = await client.query(
-        `SELECT
-          (
-            (
-              $1::date
-              - (
-                  (
-                    EXTRACT(ISODOW FROM $1::date)::int
-                    - $2::int
-                    + 7
-                  ) % 7
-                )
-            )::date
-            + $3::time
-          ) AS deadline`,
-        [
-          shipment.shipment_date,
-          shipment.order_deadline_day,
-          shipment.order_deadline_time,
-        ]
-      );
-
-      const deadline = deadlineResult.rows[0].deadline;
-
-      const currentTimeResult = await client.query(
-        `SELECT NOW() AT TIME ZONE 'Europe/Istanbul' AS current_time`
-      );
-
-      if (
-        new Date(currentTimeResult.rows[0].current_time) >
-        new Date(deadline)
-      ) {
-        await client.query("ROLLBACK");
-        transactionStarted = false;
-
-        return res.status(400).json({
-          message: "Bu sevkiyat için sipariş verme süresi dolmuştur",
-        });
-      }
-
+      // Siparişi otomatik belirlenen sevkiyata bağla.
       const orderResult = await client.query(
         `INSERT INTO orders
           (
@@ -179,7 +196,7 @@ router.post(
           )
          VALUES ($1, $2, 'PENDING', 0, 'CUSTOMER')
          RETURNING *`,
-        [customer.id, shipment_id]
+        [customer.id, shipment.id]
       );
 
       const order = orderResult.rows[0];

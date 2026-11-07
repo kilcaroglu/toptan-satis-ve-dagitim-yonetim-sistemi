@@ -1,9 +1,9 @@
-
 import { useState } from "react";
 import LoginPage from "./pages/LoginPages/LoginPage";
 import ApplicationPage from "./pages/AdminPages/ApplicationPage";
 import ApplicationStatusPage from "./pages/AdminPages/ApplicationStatusPage";
 import AdminDashboard from "./pages/AdminPages/AdminDashboard";
+import CustomerDashboard from "./pages/CustomerPages/CustomerDashboard";
 
 const SESSION_KEY = "session";
 
@@ -31,7 +31,7 @@ function getSavedSession() {
 
 function App() {
   const [currentPage, setCurrentPage] = useState(() =>
-    getSavedSession() ? "dashboard" : "login"
+    getSavedSession() ? "dashboard" : "login",
   );
 
   const [session, setSession] = useState(getSavedSession);
@@ -83,12 +83,11 @@ function App() {
 
   if (currentPage === "dashboard" && session) {
     if (session.user?.role === "ADMIN") {
-      return (
-        <AdminDashboard
-          session={session}
-          onLogout={handleLogout}
-        />
-      );
+      return <AdminDashboard session={session} onLogout={handleLogout} />;
+    }
+
+    if (session.user?.role === "CUSTOMER") {
+      return <CustomerDashboard session={session} onLogout={handleLogout} />;
     }
 
     return (

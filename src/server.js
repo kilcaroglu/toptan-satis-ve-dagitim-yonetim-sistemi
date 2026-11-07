@@ -102,9 +102,7 @@ async function generateUpcomingShipments() {
       [today]
     );
 
-    console.log(
-      `Otomatik sevkiyat kontrolü tamamlandı. Yeni sevkiyat: ${result.rowCount}`
-    );
+
   } catch (error) {
     console.error("Otomatik sevkiyat oluşturma hatası:", error);
   }
@@ -120,13 +118,10 @@ app.listen(4000, () => {
   cron.schedule(
     "5 0 * * *",
     () => {
-      console.log("Günlük otomatik sevkiyat işlemi başladı.");
       generateUpcomingShipments();
     },
     {
       timezone: "Europe/Istanbul",
     }
   );
-
-  console.log("Otomatik sevkiyat zamanlayıcısı aktif.");
 });

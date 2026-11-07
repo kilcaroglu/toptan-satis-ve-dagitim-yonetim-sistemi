@@ -546,6 +546,7 @@ router.patch(
 );
 
 // Sevkiyatları listele
+// Sevkiyatları listele
 router.get(
   "/",
   authMiddleware,
@@ -579,10 +580,8 @@ router.get(
                '[]'::json
              ) AS personnel
            FROM shipments s
-           INNER JOIN routes r
-             ON s.route_id = r.id
-           LEFT JOIN vehicles v
-             ON v.id = s.vehicle_id
+           INNER JOIN routes r ON s.route_id = r.id
+           LEFT JOIN vehicles v ON v.id = s.vehicle_id
            ORDER BY s.shipment_date, s.id`
         );
       } else if (
@@ -596,15 +595,51 @@ router.get(
              v.brand AS assigned_vehicle_brand,
              v.model AS assigned_vehicle_model
            FROM shipments s
-           INNER JOIN routes r
-             ON s.route_id = r.id
-           LEFT JOIN vehicles v
-             ON v.id = s.vehicle_id
-           INNER JOIN shipment_drivers sd
-             ON sd.shipment_id = s.id
+           INNER JOIN routes r ON s.route_id = r.id
+           LEFT JOIN vehicles v ON v.id = s.vehicle_id
+           INNER JOIN shipment_drivers sd ON sd.shipment_id = s.id
            WHERE sd.user_id = $1
            ORDER BY s.shipment_date, s.id`,
           [req.user.id]
+        );
+      } else if (req.user.role === "CUSTOMER") {
+        result = await pool.query(
+          `SELECT
+             s.id,
+             s.shipment_date,
+             s.status,
+             s.route_id,
+             r.name AS route_name
+           FROM shipments s
+           INNER JOIN routes r
+             ON r.id = s.route_id
+           INNER JOIN route_schedules rs
+             ON rs.id = s.route_schedule_id
+           INNER JOIN customers c
+             ON c.user_id = $1
+            AND c.active = TRUE
+           WHERE s.status = 'PLANNED'
+             AND s.shipment_date >=
+                 (now() AT TIME ZONE 'Europe/Istanbul')::date
+             AND r.active = TRUE
+             AND rs.active = TRUE
+             AND EXISTS (
+               SELECT 1
+               FROM route_districts rd
+               WHERE rd.route_id = r.id
+                 AND rd.district_id = c.district_id
+             )
+             AND (
+               s.shipment_date -
+               (
+                 (
+                   EXTRACT(ISODOW FROM s.shipment_date)::int
+                   - rs.order_deadline_day + 7
+                 ) % 7
+               )
+               + rs.order_deadline_time
+             ) > (now() AT TIME ZONE 'Europe/Istanbul')
+           ORDER BY s.shipment_date, s.id`
         );
       } else {
         return res.status(403).json({
