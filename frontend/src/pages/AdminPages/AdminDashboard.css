@@ -1,0 +1,651 @@
+
+/* =========================================
+   GENEL YERLEŞİM
+========================================= */
+
+.admin-layout {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  background: #f4f6fa;
+  color: #1e293b;
+  overflow-x: hidden;
+}
+
+.admin-layout *,
+.admin-layout *::before,
+.admin-layout *::after {
+  box-sizing: border-box;
+}
+
+/* =========================================
+   SOL MENÜ
+========================================= */
+
+.admin-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  width: 265px;
+  height: 100vh;
+  background: #142b46;
+  color: #fff;
+  overflow: hidden;
+  transition: transform 0.25s ease;
+}
+
+.admin-brand {
+  flex-shrink: 0;
+  min-height: 112px;
+  padding: 25px 23px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.admin-brand h2 {
+  margin: 0 0 8px;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: #fff;
+}
+
+.admin-brand p {
+  max-width: 205px;
+  margin: 0;
+  color: #aebed0;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.admin-navigation {
+  flex: 1;
+  min-height: 0;
+  padding: 17px 12px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.admin-navigation::-webkit-scrollbar {
+  width: 5px;
+}
+
+.admin-navigation::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+}
+
+.admin-menu-group {
+  margin-bottom: 22px;
+}
+
+.admin-menu-heading {
+  margin: 0 10px 9px;
+  color: #8298b1;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.1px;
+}
+
+.admin-menu-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 43px;
+  gap: 12px;
+  margin-bottom: 4px;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #d5deea;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.admin-menu-item:hover {
+  background: rgba(255, 255, 255, 0.09);
+  color: #fff;
+}
+
+.admin-menu-item.active {
+  background: #2563a6;
+  color: #fff;
+  box-shadow: inset 3px 0 #93c5fd;
+}
+
+.admin-menu-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 23px;
+  width: 23px;
+  font-size: 18px;
+}
+
+.admin-menu-label {
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* =========================================
+   SOL MENÜ ALT KISIM
+========================================= */
+
+.admin-sidebar-footer {
+  flex-shrink: 0;
+  padding: 15px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.admin-sidebar-user {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding: 9px 7px 13px;
+}
+
+.admin-user-details {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 5px;
+}
+
+.admin-user-details strong {
+  overflow: hidden;
+  color: #fff;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-user-details span {
+  color: #aebed0;
+  font-size: 11px;
+}
+
+.admin-logout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 40px;
+  gap: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.admin-logout:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* =========================================
+   ANA İÇERİK ALANI
+========================================= */
+
+.admin-main {
+  display: flex;
+  flex-direction: column;
+  width: calc(100% - 265px);
+  min-width: 0;
+  min-height: 100vh;
+  margin-left: 265px;
+}
+
+.admin-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  min-height: 88px;
+  padding: 17px 34px;
+  background: #fff;
+  border-bottom: 1px solid #e7ebf1;
+}
+
+.admin-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 17px;
+}
+
+.admin-topbar h1 {
+  margin: 5px 0 0;
+  color: #172b45;
+  font-size: 23px;
+  font-weight: 750;
+  line-height: 1.3;
+}
+
+.admin-breadcrumb {
+  color: #8290a3;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.3px;
+}
+
+.admin-menu-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  width: 39px;
+  height: 39px;
+  gap: 5px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.admin-menu-toggle span {
+  display: block;
+  width: 17px;
+  height: 2px;
+  border-radius: 5px;
+  background: #173b65;
+}
+
+/* =========================================
+   SAYFA İÇERİĞİ
+========================================= */
+
+.admin-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  padding: 29px 34px 20px;
+}
+
+.admin-content > * {
+  min-width: 0;
+}
+
+/* =========================================
+   ANA SAYFA KARŞILAMA ALANI
+========================================= */
+
+.admin-welcome-card {
+  display: flex;
+  align-items: center;
+  min-height: 175px;
+  margin-bottom: 29px;
+  padding: 30px 35px;
+  border-radius: 14px;
+  background: linear-gradient(115deg, #173b65, #28649a);
+  color: #fff;
+  box-shadow: 0 8px 22px rgba(23, 59, 101, 0.12);
+}
+
+.admin-welcome-card > div {
+  max-width: 680px;
+}
+
+.admin-eyebrow {
+  display: inline-block;
+  margin-bottom: 11px;
+  color: #94bce5;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+
+.admin-welcome-card h2 {
+  margin: 0 0 10px;
+  color: #fff;
+  font-size: 28px;
+  font-weight: 750;
+}
+
+.admin-welcome-card p {
+  max-width: 600px;
+  margin: 0;
+  color: #dce9f7;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+/* =========================================
+   İŞLEM MENÜSÜ
+========================================= */
+
+.admin-section {
+  width: 100%;
+}
+
+.admin-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 17px;
+}
+
+.admin-section-heading h2 {
+  margin: 0 0 5px;
+  color: #1e293b;
+  font-size: 19px;
+  font-weight: 750;
+}
+
+.admin-section-heading p {
+  margin: 0;
+  color: #8491a3;
+  font-size: 13px;
+}
+
+.admin-quick-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 15px;
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+.admin-quick-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 105px;
+  gap: 15px;
+  padding: 19px 20px;
+  border: 1px solid #e5eaf1;
+  border-radius: 11px;
+  background: #fff;
+  color: #1e293b;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.admin-quick-card:hover {
+  transform: translateY(-3px);
+  border-color: #b8cde5;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.07);
+}
+
+.admin-quick-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 47px;
+  width: 47px;
+  height: 47px;
+  border-radius: 11px;
+  background: #edf4fc;
+  color: #24558a;
+  font-size: 23px;
+}
+
+.admin-quick-title {
+  flex: 1;
+  min-width: 0;
+  padding-right: 12px;
+  color: #27384d;
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.5;
+}
+
+.admin-quick-arrow {
+  flex-shrink: 0;
+  color: #94a3b8;
+  font-size: 20px;
+}
+
+/* =========================================
+   GENEL MODÜL ALANI
+========================================= */
+
+.admin-module {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 430px;
+  padding: 35px;
+  border: 1px solid #e5eaf1;
+  border-radius: 14px;
+  background: #fff;
+  text-align: center;
+}
+
+.admin-module-icon {
+  display: grid;
+  place-items: center;
+  width: 70px;
+  height: 70px;
+  margin-bottom: 19px;
+  border-radius: 17px;
+  background: #edf4fc;
+  color: #24558a;
+  font-size: 30px;
+}
+
+.admin-module h2 {
+  margin: 0 0 10px;
+  color: #1e293b;
+  font-size: 24px;
+}
+
+.admin-module p {
+  max-width: 550px;
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.admin-module .admin-eyebrow {
+  color: #6684a7;
+}
+
+.admin-coming-soon {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 24px 0;
+  padding: 11px 15px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.admin-coming-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e6a23c;
+}
+
+.admin-primary-button {
+  padding: 11px 17px;
+  border: 0;
+  border-radius: 8px;
+  background: #173b65;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* =========================================
+   ALT BİLGİ
+========================================= */
+
+.admin-footer {
+  margin-top: auto;
+  padding: 25px 0 5px;
+  color: #9aa5b4;
+  font-size: 11px;
+  text-align: center;
+}
+
+/* =========================================
+   MOBİL MENÜ KATMANI
+========================================= */
+
+.admin-sidebar-overlay {
+  display: none;
+}
+
+/* =========================================
+   ORTA EKRANLAR
+========================================= */
+
+@media (max-width: 1200px) {
+  .admin-content {
+    padding: 25px 24px 18px;
+  }
+
+  .admin-topbar {
+    padding-right: 24px;
+    padding-left: 24px;
+  }
+
+  .admin-quick-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* =========================================
+   TABLET VE MOBİL
+========================================= */
+
+@media (max-width: 850px) {
+  .admin-sidebar {
+    transform: translateX(-100%);
+  }
+
+  .admin-sidebar.mobile-menu-open {
+    transform: translateX(0);
+  }
+
+  .admin-sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    display: block;
+    border: 0;
+    background: rgba(15, 23, 42, 0.48);
+  }
+
+  .admin-main {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .admin-menu-toggle {
+    display: flex;
+  }
+
+  .admin-topbar {
+    min-height: 76px;
+    padding: 14px 20px;
+  }
+
+  .admin-topbar h1 {
+    font-size: 20px;
+  }
+
+  .admin-content {
+    padding: 22px 20px;
+  }
+
+  .admin-welcome-card {
+    min-height: 155px;
+    padding: 25px;
+  }
+}
+
+/* =========================================
+   KÜÇÜK MOBİL EKRANLAR
+========================================= */
+
+@media (max-width: 560px) {
+  .admin-topbar {
+    min-height: 70px;
+    padding: 12px 14px;
+  }
+
+  .admin-topbar-left {
+    gap: 11px;
+  }
+
+  .admin-topbar h1 {
+    font-size: 17px;
+  }
+
+  .admin-breadcrumb {
+    font-size: 9px;
+  }
+
+  .admin-content {
+    padding: 16px 13px;
+  }
+
+  .admin-welcome-card {
+    min-height: auto;
+    padding: 23px 20px;
+    margin-bottom: 23px;
+  }
+
+  .admin-welcome-card h2 {
+    font-size: 23px;
+  }
+
+  .admin-welcome-card p {
+    font-size: 13px;
+  }
+
+  .admin-section-heading h2 {
+    font-size: 17px;
+  }
+
+  .admin-quick-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .admin-quick-card {
+    min-height: 80px;
+    padding: 14px;
+  }
+
+  .admin-quick-icon {
+    flex-basis: 42px;
+    width: 42px;
+    height: 42px;
+  }
+
+  .admin-quick-title {
+    font-size: 13px;
+  }
+
+  .admin-module {
+    min-height: 350px;
+    padding: 22px 15px;
+  }
+
+  .admin-module h2 {
+    font-size: 21px;
+  }
+}

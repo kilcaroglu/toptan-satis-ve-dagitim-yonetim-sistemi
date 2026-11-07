@@ -1,9 +1,9 @@
 
 import { useState } from "react";
-import LoginPage from "./pages/LoginPage";
-import ApplicationPage from "./pages/ApplicationPage";
-import ApplicationStatusPage from "./pages/ApplicationStatusPage";
-import AdminDashboard from "./pages/AdminDashboard";
+import LoginPage from "./pages/LoginPages/LoginPage";
+import ApplicationPage from "./pages/AdminPages/ApplicationPage";
+import ApplicationStatusPage from "./pages/AdminPages/ApplicationStatusPage";
+import AdminDashboard from "./pages/AdminPages/AdminDashboard";
 
 const SESSION_KEY = "session";
 
