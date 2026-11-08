@@ -7,7 +7,7 @@
   display: flex;
   width: 100%;
   min-height: 100vh;
-  background: #f4f6fa;
+  background: #f5f7fa;
   color: #1e293b;
   overflow-x: hidden;
 }
@@ -24,150 +24,211 @@
 
 .admin-sidebar {
   position: fixed;
-  top: 0;
-  left: 0;
+  inset: 0 auto 0 0;
   z-index: 100;
   display: flex;
   flex-direction: column;
-  width: 265px;
+  width: 260px;
   height: 100vh;
-  background: #142b46;
+  background: #14263d;
   color: #fff;
   overflow: hidden;
+  font-family: "Segoe UI", Arial, sans-serif;
   transition: transform 0.25s ease;
 }
 
 .admin-brand {
+  display: flex;
+  align-items: center;
   flex-shrink: 0;
-  min-height: 112px;
-  padding: 25px 23px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  min-height: 91px;
+  gap: 12px;
+  padding: 19px 22px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.admin-brand-mark {
+  display: grid;
+  place-items: center;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(255, 255, 255, 0.17);
+  border-radius: 11px;
+  background: #203d5d;
+  color: #fff;
+  font-size: 23px;
+  font-weight: 700;
+}
+
+.admin-brand-text {
+  min-width: 0;
 }
 
 .admin-brand h2 {
-  margin: 0 0 8px;
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: 2px;
+  margin: 0 0 5px;
   color: #fff;
+  font-size: 16.5px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
 }
 
 .admin-brand p {
-  max-width: 205px;
   margin: 0;
-  color: #aebed0;
-  font-size: 11px;
-  line-height: 1.5;
+  color: #a7b7c9;
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.1px;
+}
+
+.admin-nav-caption {
+  flex-shrink: 0;
+  padding: 19px 22px 5px;
+  color: #8295aa;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.3px;
 }
 
 .admin-navigation {
   flex: 1;
   min-height: 0;
-  padding: 17px 12px;
+  padding: 9px 12px 15px;
   overflow-y: auto;
   overflow-x: hidden;
 }
 
 .admin-navigation::-webkit-scrollbar {
-  width: 5px;
+  width: 4px;
 }
 
 .admin-navigation::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
   border-radius: 10px;
+  background: rgba(255, 255, 255, 0.17);
 }
 
 .admin-menu-group {
-  margin-bottom: 22px;
+  margin-bottom: 19px;
 }
 
 .admin-menu-heading {
-  margin: 0 10px 9px;
-  color: #8298b1;
-  font-size: 10px;
-  font-weight: 800;
+  margin: 0 10px 8px;
+  color: #8295aa;
+  font-size: 9.5px;
+  font-weight: 700;
   letter-spacing: 1.1px;
 }
 
 .admin-menu-item {
+  position: relative;
   display: flex;
   align-items: center;
   width: 100%;
-  min-height: 43px;
+  min-height: 42px;
   gap: 12px;
-  margin-bottom: 4px;
-  padding: 9px 12px;
+  margin-bottom: 3px;
+  padding: 9px 11px;
   border: 0;
-  border-radius: 8px;
+  border-radius: 7px;
   background: transparent;
-  color: #d5deea;
+  color: #c5d0dc;
+  font-family: inherit;
   text-align: left;
   cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition: background 0.18s ease, color 0.18s ease;
 }
 
 .admin-menu-item:hover {
-  background: rgba(255, 255, 255, 0.09);
+  background: rgba(255, 255, 255, 0.07);
   color: #fff;
 }
 
 .admin-menu-item.active {
-  background: #2563a6;
+  background: #244b73;
   color: #fff;
-  box-shadow: inset 3px 0 #93c5fd;
 }
 
 .admin-menu-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
   flex: 0 0 23px;
   width: 23px;
-  font-size: 18px;
+  color: #9eb2c8;
+}
+
+.admin-menu-item.active .admin-menu-icon {
+  color: #fff;
 }
 
 .admin-menu-label {
+  flex: 1;
   min-width: 0;
+  color: inherit;
   font-size: 13px;
-  font-weight: 600;
-  line-height: 1.4;
+  font-weight: 500;
+  letter-spacing: 0.05px;
+  line-height: 1.45;
+}
+
+.admin-active-dot {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #8fc5ff;
 }
 
 /* =========================================
-   SOL MENÜ ALT KISIM
+   SOL MENÜ ALT KISMI
 ========================================= */
 
 .admin-sidebar-footer {
   flex-shrink: 0;
-  padding: 15px 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 13px 13px 15px;
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
 }
 
 .admin-sidebar-user {
   display: flex;
   align-items: center;
   min-width: 0;
-  padding: 9px 7px 13px;
+  gap: 11px;
+  padding: 5px 6px 14px;
+}
+
+.admin-user-avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #315577;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .admin-user-details {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  gap: 5px;
+  gap: 4px;
 }
 
 .admin-user-details strong {
   overflow: hidden;
   color: #fff;
-  font-size: 13px;
+  font-size: 12.5px;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .admin-user-details span {
-  color: #aebed0;
-  font-size: 11px;
+  color: #94a8bc;
+  font-size: 10px;
+  font-weight: 400;
 }
 
 .admin-logout {
@@ -175,33 +236,34 @@
   align-items: center;
   justify-content: center;
   width: 100%;
-  min-height: 40px;
+  min-height: 39px;
   gap: 9px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.06);
-  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #dce5ee;
+  font-family: inherit;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   transition: background 0.2s ease;
 }
 
 .admin-logout:hover {
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.11);
 }
 
 /* =========================================
-   ANA İÇERİK ALANI
+   ANA İÇERİK
 ========================================= */
 
 .admin-main {
   display: flex;
   flex-direction: column;
-  width: calc(100% - 265px);
+  width: calc(100% - 260px);
   min-width: 0;
   min-height: 100vh;
-  margin-left: 265px;
+  margin-left: 260px;
 }
 
 .admin-topbar {
@@ -210,29 +272,29 @@
   z-index: 50;
   display: flex;
   align-items: center;
-  min-height: 88px;
-  padding: 17px 34px;
+  min-height: 83px;
+  padding: 16px 32px;
   background: #fff;
-  border-bottom: 1px solid #e7ebf1;
+  border-bottom: 1px solid #e8edf2;
 }
 
 .admin-topbar-left {
   display: flex;
   align-items: center;
-  gap: 17px;
+  gap: 16px;
 }
 
 .admin-topbar h1 {
   margin: 5px 0 0;
-  color: #172b45;
-  font-size: 23px;
+  color: #1b3049;
+  font-size: 22px;
   font-weight: 750;
   line-height: 1.3;
 }
 
 .admin-breadcrumb {
-  color: #8290a3;
-  font-size: 10px;
+  color: #8b98a8;
+  font-size: 9px;
   font-weight: 800;
   letter-spacing: 1.3px;
 }
@@ -269,7 +331,7 @@
   flex-direction: column;
   width: 100%;
   min-width: 0;
-  padding: 29px 34px 20px;
+  padding: 28px 32px 55px;
 }
 
 .admin-content > * {
@@ -277,19 +339,19 @@
 }
 
 /* =========================================
-   ANA SAYFA KARŞILAMA ALANI
+   KARŞILAMA ALANI
 ========================================= */
 
 .admin-welcome-card {
   display: flex;
   align-items: center;
-  min-height: 175px;
-  margin-bottom: 29px;
-  padding: 30px 35px;
-  border-radius: 14px;
-  background: linear-gradient(115deg, #173b65, #28649a);
+  min-height: 170px;
+  margin-bottom: 28px;
+  padding: 29px 34px;
+  border-radius: 12px;
+  background: linear-gradient(110deg, #193b60, #2c6595);
   color: #fff;
-  box-shadow: 0 8px 22px rgba(23, 59, 101, 0.12);
+  box-shadow: 0 5px 17px rgba(23, 59, 101, 0.1);
 }
 
 .admin-welcome-card > div {
@@ -298,17 +360,17 @@
 
 .admin-eyebrow {
   display: inline-block;
-  margin-bottom: 11px;
-  color: #94bce5;
-  font-size: 10px;
+  margin-bottom: 10px;
+  color: #a9c9e8;
+  font-size: 9px;
   font-weight: 800;
   letter-spacing: 1.5px;
 }
 
 .admin-welcome-card h2 {
-  margin: 0 0 10px;
+  margin: 0 0 9px;
   color: #fff;
-  font-size: 28px;
+  font-size: 27px;
   font-weight: 750;
 }
 
@@ -316,7 +378,7 @@
   max-width: 600px;
   margin: 0;
   color: #dce9f7;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.7;
 }
 
@@ -332,85 +394,81 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 17px;
+  margin-bottom: 16px;
 }
 
 .admin-section-heading h2 {
   margin: 0 0 5px;
   color: #1e293b;
-  font-size: 19px;
+  font-size: 18px;
   font-weight: 750;
 }
 
 .admin-section-heading p {
   margin: 0;
   color: #8491a3;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .admin-quick-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 15px;
+  gap: 14px;
   width: 100%;
-  margin-bottom: 15px;
+  margin-bottom: 14px;
 }
 
 .admin-quick-card {
-  position: relative;
   display: flex;
   align-items: center;
   min-width: 0;
-  min-height: 105px;
-  gap: 15px;
-  padding: 19px 20px;
+  min-height: 100px;
+  gap: 14px;
+  padding: 17px 18px;
   border: 1px solid #e5eaf1;
-  border-radius: 11px;
+  border-radius: 10px;
   background: #fff;
   color: #1e293b;
   text-align: left;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease,
-    border-color 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .admin-quick-card:hover {
-  transform: translateY(-3px);
-  border-color: #b8cde5;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.07);
+  transform: translateY(-2px);
+  border-color: #bfd0e3;
+  box-shadow: 0 7px 17px rgba(15, 23, 42, 0.06);
 }
 
 .admin-quick-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 47px;
-  width: 47px;
-  height: 47px;
-  border-radius: 11px;
-  background: #edf4fc;
+  display: grid;
+  place-items: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: #edf3f9;
   color: #24558a;
-  font-size: 23px;
 }
 
 .admin-quick-title {
   flex: 1;
   min-width: 0;
-  padding-right: 12px;
+  padding-right: 8px;
   color: #27384d;
-  font-size: 13px;
-  font-weight: 750;
+  font-size: 12px;
+  font-weight: 700;
   line-height: 1.5;
 }
 
 .admin-quick-arrow {
   flex-shrink: 0;
   color: #94a3b8;
-  font-size: 20px;
+  font-size: 19px;
 }
 
 /* =========================================
-   GENEL MODÜL ALANI
+   MODÜL ALANI
 ========================================= */
 
 .admin-module {
@@ -421,7 +479,7 @@
   min-height: 430px;
   padding: 35px;
   border: 1px solid #e5eaf1;
-  border-radius: 14px;
+  border-radius: 12px;
   background: #fff;
   text-align: center;
 }
@@ -432,10 +490,9 @@
   width: 70px;
   height: 70px;
   margin-bottom: 19px;
-  border-radius: 17px;
+  border-radius: 15px;
   background: #edf4fc;
   color: #24558a;
-  font-size: 30px;
 }
 
 .admin-module h2 {
@@ -487,19 +544,29 @@
 }
 
 /* =========================================
-   ALT BİLGİ
+   SABİT ALT BİLGİ
 ========================================= */
 
 .admin-footer {
-  margin-top: auto;
-  padding: 25px 0 5px;
+  position: fixed;
+  bottom: 0;
+  left: 260px;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(100% - 260px);
+  min-height: 38px;
+  margin: 0;
+  padding: 8px 12px;
+  background: rgba(245, 247, 250, 0.96);
   color: #9aa5b4;
   font-size: 11px;
   text-align: center;
 }
 
 /* =========================================
-   MOBİL MENÜ KATMANI
+   MOBİL MENÜ
 ========================================= */
 
 .admin-sidebar-overlay {
@@ -512,7 +579,7 @@
 
 @media (max-width: 1200px) {
   .admin-content {
-    padding: 25px 24px 18px;
+    padding: 25px 24px 55px;
   }
 
   .admin-topbar {
@@ -566,17 +633,22 @@
   }
 
   .admin-content {
-    padding: 22px 20px;
+    padding: 22px 20px 55px;
   }
 
   .admin-welcome-card {
     min-height: 155px;
     padding: 25px;
   }
+
+  .admin-footer {
+    left: 0;
+    width: 100%;
+  }
 }
 
 /* =========================================
-   KÜÇÜK MOBİL EKRANLAR
+   KÜÇÜK MOBİL
 ========================================= */
 
 @media (max-width: 560px) {
@@ -598,7 +670,7 @@
   }
 
   .admin-content {
-    padding: 16px 13px;
+    padding: 16px 13px 55px;
   }
 
   .admin-welcome-card {

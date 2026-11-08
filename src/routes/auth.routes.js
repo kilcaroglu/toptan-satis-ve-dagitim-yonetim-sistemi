@@ -41,6 +41,18 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// Kayıtlı tokenın geçerliliğini kontrol et.
+router.get("/me", authMiddleware, async (req, res) => {
+  return res.json({
+    user: {
+      id: req.user.id,
+      email: req.user.email,
+      name: req.user.name,
+      role: req.user.role
+    }
+  });
+});
+
 // Giriş yapan kullanıcının şifresini değiştir.
 router.patch(
   "/change-password",
@@ -55,8 +67,10 @@ router.patch(
         });
       }
 
-      if (typeof currentPassword !== "string" ||
-          typeof newPassword !== "string") {
+      if (
+        typeof currentPassword !== "string" ||
+        typeof newPassword !== "string"
+      ) {
         return res.status(400).json({
           message: "Şifre bilgileri geçersiz."
         });
@@ -102,7 +116,7 @@ router.patch(
 
       if (samePassword) {
         return res.status(400).json({
-          message: "Yeni şifre mevcut şifrenizden farklı olmalıdır."
+          message: "Yeni şifreniz mevcut şifrenizden farklı olmalıdır."
         });
       }
 

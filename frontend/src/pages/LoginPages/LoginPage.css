@@ -1,81 +1,90 @@
 
+* {
+  box-sizing: border-box;
+}
+
 .page {
   min-height: 100vh;
   width: 100%;
-  padding: 55px 20px 25px;
+  padding: 20px 20px 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   background: linear-gradient(135deg, #0a2858, #061632);
   color: #ffffff;
+  position: relative;
 }
 
+/* Üst başlık */
 .heading {
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 18px;
 }
 
 .heading h1 {
-  margin: 0 0 12px;
-  font-size: clamp(32px, 5vw, 58px);
+  margin: 0 0 5px;
+  font-size: clamp(27px, 3.5vw, 40px);
   font-weight: 700;
-  letter-spacing: 2px;
+  letter-spacing: 1.5px;
 }
 
 .heading p {
   margin: 0;
-  font-size: clamp(15px, 2.5vw, 24px);
-  line-height: 1.5;
+  font-size: clamp(13px, 1.5vw, 17px);
+  line-height: 1.4;
   color: #f1f5fb;
 }
 
+/* Giriş kutusu */
 .login-card {
   width: 100%;
-  max-width: 460px;
-  padding: 34px;
+  max-width: 410px;
+  padding: 23px 28px;
   border-radius: 10px;
   background: #ffffff;
   color: #10264b;
-  box-shadow: 0 15px 45px #00000030;
+  box-shadow: 0 12px 35px #00000030;
 }
 
 .login-card h2 {
   margin: 0;
   text-align: center;
-  font-size: 28px;
+  font-size: 24px;
 }
 
 .description {
-  margin: 12px 0 30px;
+  margin: 6px 0 19px;
   text-align: center;
   color: #52627a;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 13px;
+  line-height: 1.4;
 }
 
+/* Form alanları */
 .login-card form {
   display: flex;
   flex-direction: column;
 }
 
 .login-card label {
-  margin-bottom: 8px;
-  font-size: 14px;
+  margin-bottom: 5px;
+  font-size: 13px;
   font-weight: 600;
   color: #243752;
 }
 
 .login-card input {
   width: 100%;
-  min-height: 48px;
-  margin-bottom: 20px;
-  padding: 12px;
+  min-height: 42px;
+  margin-bottom: 13px;
+  padding: 9px 11px;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   background: #ffffff;
   color: #172b49;
   font-family: inherit;
-  font-size: 15px;
+  font-size: 14px;
 }
 
 .login-card input::placeholder {
@@ -88,15 +97,16 @@
   outline-offset: 1px;
 }
 
+/* Giriş butonu */
 .login-card form button,
 .application-button {
-  min-height: 50px;
+  min-height: 42px;
   width: 100%;
   border: none;
   border-radius: 6px;
   background: #0b3474;
   color: #ffffff;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   cursor: pointer;
 }
@@ -105,13 +115,19 @@
   background: #164b91;
 }
 
+.login-card form button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+/* Başvuru alanı */
 .application-divider {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin: 25px 0 18px;
+  gap: 10px;
+  margin: 17px 0 12px;
   color: #59677b;
-  font-size: 13px;
+  font-size: 12px;
   text-align: center;
 }
 
@@ -126,52 +142,103 @@
 .application-button {
   background: #ffffff;
   color: #0b3474;
-  border: 2px solid #0b3474;
+  border: 1.5px solid #0b3474;
 }
 
 .application-button:hover {
   background: #edf4ff;
 }
 
-footer {
-  margin-top: auto;
-  padding-top: 35px;
-  color: #d2deef;
-  font-size: 12px;
+.status-link-button {
+  margin-top: 8px;
 }
 
-@media (max-width: 500px) {
-  .page {
-    padding: 40px 16px 20px;
-  }
-
-  .heading {
-    margin-bottom: 30px;
-  }
-
-  .login-card {
-    padding: 27px 22px;
-  }
-}
-
-
-
+/* Hata mesajı */
 .login-error {
-  margin: 0 0 16px;
-  padding: 10px 12px;
+  margin: 0 0 12px;
+  padding: 8px 10px;
   border: 1px solid #fecaca;
   border-radius: 6px;
   background: #fef2f2;
   color: #b91c1c;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 13px;
+  line-height: 1.4;
 }
 
-.login-card form button:disabled {
-  cursor: wait;
-  opacity: 0.7;
+/* Alt bilgi */
+footer {
+  position: absolute;
+  bottom: 12px;
+  left: 0;
+  width: 100%;
+  color: #d2deef;
+  font-size: 11px;
+  text-align: center;
 }
 
-.status-link-button {
-  margin-top: 10px;
+/* Mobil görünüm */
+@media (max-width: 500px) {
+  .page {
+    padding: 18px 15px 40px;
+  }
+
+  .heading {
+    margin-bottom: 17px;
+  }
+
+  .heading h1 {
+    font-size: 29px;
+  }
+
+  .heading p {
+    font-size: 13px;
+  }
+
+  .login-card {
+    max-width: 100%;
+    padding: 22px 20px;
+  }
+
+  .login-card h2 {
+    font-size: 22px;
+  }
+}
+
+/* Kısa ekranlar */
+@media (max-height: 700px) {
+  .page {
+    padding-top: 10px;
+    padding-bottom: 35px;
+  }
+
+  .heading {
+    margin-bottom: 10px;
+  }
+
+  .heading h1 {
+    font-size: 28px;
+  }
+
+  .login-card {
+    padding-top: 17px;
+    padding-bottom: 17px;
+  }
+
+  .description {
+    margin-bottom: 12px;
+  }
+
+  .login-card input {
+    min-height: 38px;
+    margin-bottom: 9px;
+  }
+
+  .login-card form button,
+  .application-button {
+    min-height: 38px;
+  }
+
+  .application-divider {
+    margin: 12px 0 9px;
+  }
 }

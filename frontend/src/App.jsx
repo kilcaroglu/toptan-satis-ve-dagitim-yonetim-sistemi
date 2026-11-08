@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import LoginPage from "./pages/LoginPages/LoginPage";
 import ApplicationPage from "./pages/AdminPages/ApplicationPage";
 import ApplicationStatusPage from "./pages/AdminPages/ApplicationStatusPage";
@@ -8,6 +8,7 @@ import CustomerDashboard from "./pages/CustomerPages/CustomerDashboard";
 import PersonnelDashboard from "./pages/PersonnelPages/PersonnelDashboard";
 import CollectorDashboard from "./pages/CollectorPages/CollectorDashboard";
 
+const API_URL = "http://localhost:4000";
 const SESSION_KEY = "session";
 
 function getSavedSession() {
@@ -33,12 +34,74 @@ function getSavedSession() {
 }
 
 function App() {
+  const [session, setSession] = useState(getSavedSession);
+
   const [currentPage, setCurrentPage] = useState(() =>
-    getSavedSession() ? "dashboard" : "login",
+    session ? "dashboard" : "login"
   );
 
-  const [session, setSession] = useState(getSavedSession);
+  const [checkingSession, setCheckingSession] = useState(
+    () => Boolean(session)
+  );
+
   const [applicationNumber, setApplicationNumber] = useState("");
+
+  // Uygulama açıldığında kayıtlı tokenın geçerliliğini kontrol et.
+  useEffect(() => {
+    async function validateSession() {
+      const savedSession = getSavedSession();
+
+      if (!savedSession) {
+        setSession(null);
+        setCurrentPage("login");
+        setCheckingSession(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/auth/me`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${savedSession.token}`,
+          },
+        });
+
+        if (response.status === 401) {
+          localStorage.removeItem(SESSION_KEY);
+          setSession(null);
+          setCurrentPage("login");
+          return;
+        }
+
+        if (!response.ok) {
+          console.error("Oturum kontrolü başarısız:", response.status);
+          return;
+        }
+
+        const data = await response.json();
+
+        const validSession = {
+          token: savedSession.token,
+          user: data.user,
+        };
+
+        localStorage.setItem(
+          SESSION_KEY,
+          JSON.stringify(validSession)
+        );
+
+        setSession(validSession);
+        setCurrentPage("dashboard");
+      } catch (error) {
+        // Sunucuya ulaşılamaması durumunda tokenı silme.
+        console.error("Oturum kontrolü yapılamadı:", error);
+      } finally {
+        setCheckingSession(false);
+      }
+    }
+
+    validateSession();
+  }, []);
 
   function handleLogin(data) {
     if (!data?.token || !data?.user) {
@@ -61,6 +124,23 @@ function App() {
     localStorage.removeItem(SESSION_KEY);
     setSession(null);
     setCurrentPage("login");
+  }
+
+  // Token kontrolü tamamlanmadan ekranları gösterme.
+  if (checkingSession) {
+    return (
+      <main
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontFamily: "Arial, sans-serif",
+        }}
+      >
+        Oturum kontrol ediliyor...
+      </main>
+    );
   }
 
   if (currentPage === "application") {
@@ -86,22 +166,42 @@ function App() {
 
   if (currentPage === "dashboard" && session) {
     if (session.user?.role === "ADMIN") {
-      return <AdminDashboard session={session} onLogout={handleLogout} />;
+      return (
+        <AdminDashboard
+          session={session}
+          onLogout={handleLogout}
+        />
+      );
     }
 
     if (session.user?.role === "CUSTOMER") {
-      return <CustomerDashboard session={session} onLogout={handleLogout} />;
+      return (
+        <CustomerDashboard
+          session={session}
+          onLogout={handleLogout}
+        />
+      );
     }
 
     if (
       session.user?.role === "DRIVER" ||
       session.user?.role === "DISTRIBUTOR"
     ) {
-      return <PersonnelDashboard session={session} onLogout={handleLogout} />;
+      return (
+        <PersonnelDashboard
+          session={session}
+          onLogout={handleLogout}
+        />
+      );
     }
 
     if (session.user?.role === "COLLECTOR") {
-      return <CollectorDashboard session={session} onLogout={handleLogout} />;
+      return (
+        <CollectorDashboard
+          session={session}
+          onLogout={handleLogout}
+        />
+      );
     }
 
     return (
