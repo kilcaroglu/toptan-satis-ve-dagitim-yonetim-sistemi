@@ -63,7 +63,7 @@ router.post(
   }
 );
 
-// Manuel sevkiyat oluştur
+// Manuel / istisnai sevkiyat oluştur
 router.post(
   "/",
   authMiddleware,
@@ -91,21 +91,17 @@ router.post(
         });
       }
 
-      const schedule = await pool.query(
-        `SELECT rs.id
-         FROM route_schedules rs
-         INNER JOIN routes r ON r.id = rs.route_id
-         WHERE rs.route_id = $1
-           AND rs.delivery_day =
-               EXTRACT(ISODOW FROM $2::date)::int
-           AND rs.active = TRUE
-           AND r.active = TRUE`,
-        [routeId, shipment_date]
+      const route = await pool.query(
+        `SELECT id
+         FROM routes
+         WHERE id = $1
+           AND active = TRUE`,
+        [routeId]
       );
 
-      if (schedule.rows.length === 0) {
+      if (route.rows.length === 0) {
         return res.status(400).json({
-          message: "Bu rota seçilen tarihte teslimat yapmıyor"
+          message: "Seçilen rota bulunamadı veya pasif durumda"
         });
       }
 
@@ -147,11 +143,10 @@ router.post(
            driver_name,
            distributor_name
          )
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         VALUES ($1, NULL, $2, $3, $4, $5, $6)
          RETURNING *`,
         [
           routeId,
-          schedule.rows[0].id,
           shipment_date,
           selectedVehicle?.id || null,
           selectedVehicle?.plate || vehicle_plate || null,
@@ -160,13 +155,19 @@ router.post(
         ]
       );
 
-      return res.status(201).json(result.rows[0]);
+      return res.status(201).json({
+        message: "İstisnai sevkiyat oluşturuldu",
+        shipment: {
+          ...result.rows[0],
+          shipment_date: String(result.rows[0].shipment_date).slice(0, 10)
+        }
+      });
     } catch (error) {
       console.error("Sevkiyat oluşturma hatası:", error);
 
       if (error.code === "23505") {
         return res.status(409).json({
-          message: "Bu rota ve tarih için sevkiyat veya araç ataması zaten mevcut"
+          message: "Bu rota veya araç için aynı tarihte başka bir sevkiyat mevcut"
         });
       }
 
@@ -178,14 +179,12 @@ router.post(
 );
 
 // Sevkiyata personel ata.
-// DRIVER ve DISTRIBUTOR rollerindeki aktif kullanıcılar kabul edilir.
 const assignPersonnel = async (req, res) => {
   let client;
   let transactionStarted = false;
 
   try {
     const shipmentId = Number(req.params.id);
-
     const personnelIds =
       req.body.personnel_ids ?? req.body.driver_ids;
 
@@ -527,7 +526,10 @@ router.patch(
         message: vehicle
           ? "Araç sevkiyata atandı"
           : "Sevkiyatın araç ataması kaldırıldı",
-        shipment: result.rows[0]
+        shipment: {
+          ...result.rows[0],
+          shipment_date: String(result.rows[0].shipment_date).slice(0, 10)
+        }
       });
     } catch (error) {
       console.error("Araç atama hatası:", error);
@@ -546,7 +548,6 @@ router.patch(
 );
 
 // Sevkiyatları listele
-// Sevkiyatları listele
 router.get(
   "/",
   authMiddleware,
@@ -558,6 +559,7 @@ router.get(
         result = await pool.query(
           `SELECT
              s.*,
+             TO_CHAR(s.shipment_date, 'YYYY-MM-DD') AS shipment_date,
              r.name AS route_name,
              v.plate AS assigned_vehicle_plate,
              v.brand AS assigned_vehicle_brand,
@@ -590,6 +592,7 @@ router.get(
         result = await pool.query(
           `SELECT
              s.*,
+             TO_CHAR(s.shipment_date, 'YYYY-MM-DD') AS shipment_date,
              r.name AS route_name,
              v.plate AS assigned_vehicle_plate,
              v.brand AS assigned_vehicle_brand,
@@ -606,7 +609,7 @@ router.get(
         result = await pool.query(
           `SELECT
              s.id,
-             s.shipment_date,
+             TO_CHAR(s.shipment_date, 'YYYY-MM-DD') AS shipment_date,
              s.status,
              s.route_id,
              r.name AS route_name
@@ -676,11 +679,13 @@ router.put(
         distributor_name
       } = req.body;
 
+      const routeId = Number(route_id);
+
       if (
         !Number.isInteger(shipmentId) ||
         shipmentId <= 0 ||
-        !Number.isInteger(Number(route_id)) ||
-        Number(route_id) <= 0 ||
+        !Number.isInteger(routeId) ||
+        routeId <= 0 ||
         !shipment_date
       ) {
         return res.status(400).json({
@@ -688,34 +693,69 @@ router.put(
         });
       }
 
-      const schedule = await pool.query(
-        `SELECT rs.id
-         FROM route_schedules rs
-         INNER JOIN routes r
-           ON r.id = rs.route_id
-         WHERE rs.route_id = $1
-           AND rs.delivery_day =
-               EXTRACT(ISODOW FROM $2::date)::int
-           AND rs.active = TRUE
-           AND r.active = TRUE`,
-        [Number(route_id), shipment_date]
+      const existingShipment = await pool.query(
+        `SELECT id, route_schedule_id
+         FROM shipments
+         WHERE id = $1`,
+        [shipmentId]
       );
 
-      if (schedule.rows.length === 0) {
-        return res.status(400).json({
-          message: "Seçilen rota bu tarihte teslimat yapmıyor"
+      if (existingShipment.rows.length === 0) {
+        return res.status(404).json({
+          message: "Sevkiyat bulunamadı"
         });
+      }
+
+      const route = await pool.query(
+        `SELECT id
+         FROM routes
+         WHERE id = $1
+           AND active = TRUE`,
+        [routeId]
+      );
+
+      if (route.rows.length === 0) {
+        return res.status(400).json({
+          message: "Seçilen rota bulunamadı veya pasif durumda"
+        });
+      }
+
+      let scheduleId = null;
+
+      if (existingShipment.rows[0].route_schedule_id !== null) {
+        const schedule = await pool.query(
+          `SELECT rs.id
+           FROM route_schedules rs
+           WHERE rs.route_id = $1
+             AND rs.delivery_day =
+                 EXTRACT(ISODOW FROM $2::date)::int
+             AND rs.active = TRUE
+           LIMIT 1`,
+          [routeId, shipment_date]
+        );
+
+        if (schedule.rows.length > 0) {
+          scheduleId = schedule.rows[0].id;
+        }
       }
 
       let selectedVehicle = null;
 
       if (vehicle_id !== undefined && vehicle_id !== null) {
+        const vehicleId = Number(vehicle_id);
+
+        if (!Number.isInteger(vehicleId) || vehicleId <= 0) {
+          return res.status(400).json({
+            message: "Geçerli bir araç ID'si gönderilmelidir"
+          });
+        }
+
         const vehicleResult = await pool.query(
           `SELECT id, plate
            FROM vehicles
            WHERE id = $1
              AND active = TRUE`,
-          [Number(vehicle_id)]
+          [vehicleId]
         );
 
         if (vehicleResult.rows.length === 0) {
@@ -739,8 +779,8 @@ router.put(
          WHERE id = $8
          RETURNING *`,
         [
-          Number(route_id),
-          schedule.rows[0].id,
+          routeId,
+          scheduleId,
           shipment_date,
           selectedVehicle?.id || null,
           selectedVehicle?.plate || vehicle_plate || null,
@@ -750,15 +790,12 @@ router.put(
         ]
       );
 
-      if (result.rows.length === 0) {
-        return res.status(404).json({
-          message: "Sevkiyat bulunamadı"
-        });
-      }
-
       return res.json({
         message: "Sevkiyat güncellendi",
-        shipment: result.rows[0]
+        shipment: {
+          ...result.rows[0],
+          shipment_date: String(result.rows[0].shipment_date).slice(0, 10)
+        }
       });
     } catch (error) {
       console.error("Sevkiyat güncelleme hatası:", error);
@@ -820,7 +857,10 @@ router.patch(
 
       return res.json({
         message: "Sevkiyat durumu güncellendi",
-        shipment: result.rows[0]
+        shipment: {
+          ...result.rows[0],
+          shipment_date: String(result.rows[0].shipment_date).slice(0, 10)
+        }
       });
     } catch (error) {
       console.error("Sevkiyat durumu güncelleme hatası:", error);

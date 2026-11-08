@@ -1,0 +1,512 @@
+
+* {
+  box-sizing: border-box;
+}
+
+.personnel-page {
+  min-height: 100vh;
+  background: #f5f6f8;
+  color: #202b3c;
+}
+
+.personnel-header {
+  min-height: 68px;
+  padding: 12px 24px;
+  background: #172b4d;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.personnel-header h1 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.personnel-header span {
+  font-size: 12px;
+  color: #d4ddeb;
+}
+
+.personnel-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.personnel-user span {
+  font-size: 14px;
+  color: white;
+}
+
+.personnel-user button,
+.personnel-password-button {
+  border: 1px solid #8292aa;
+  background: transparent;
+  color: white;
+  padding: 8px 13px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.personnel-password-button:hover,
+.personnel-user button:hover {
+  background: #294365;
+}
+
+.personnel-content {
+  width: 100%;
+  max-width: 850px;
+  margin: 0 auto;
+  padding: 28px 20px;
+}
+
+.personnel-page-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 22px;
+}
+
+.personnel-page-heading h2,
+.personnel-section-heading h2 {
+  margin: 0 0 6px;
+  font-size: 22px;
+  color: #172b4d;
+}
+
+.personnel-page-heading p,
+.personnel-section-heading p {
+  margin: 0;
+  color: #687386;
+  font-size: 14px;
+}
+
+.personnel-refresh-button,
+.personnel-back-button {
+  border: 1px solid #d5dbe4;
+  background: white;
+  color: #263b5a;
+  padding: 9px 14px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.personnel-back-button {
+  margin-bottom: 20px;
+}
+
+.personnel-refresh-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.personnel-shipment-list,
+.personnel-order-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.personnel-shipment-card,
+.personnel-order-card {
+  display: block;
+  width: 100%;
+  padding: 17px;
+  text-align: left;
+  background: white;
+  border: 1px solid #e0e4ea;
+  border-radius: 7px;
+  color: inherit;
+  cursor: pointer;
+}
+
+.personnel-shipment-card:hover,
+.personnel-order-card:hover {
+  border-color: #9baac0;
+}
+
+.personnel-card-top,
+.personnel-card-bottom,
+.personnel-card-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.personnel-card-top {
+  margin-bottom: 15px;
+}
+
+.personnel-card-top strong {
+  font-size: 16px;
+}
+
+.personnel-card-info {
+  padding: 7px 0;
+  font-size: 13px;
+}
+
+.personnel-card-info span,
+.personnel-order-card p {
+  color: #687386;
+}
+
+.personnel-card-info strong {
+  font-weight: 500;
+  text-align: right;
+}
+
+.personnel-card-bottom {
+  margin-top: 13px;
+  padding-top: 12px;
+  border-top: 1px solid #edf0f3;
+  color: #344e73;
+  font-size: 13px;
+}
+
+.personnel-order-card p {
+  margin: -7px 0 12px;
+  font-size: 13px;
+}
+
+.personnel-status {
+  flex-shrink: 0;
+  padding: 5px 9px;
+  border-radius: 4px;
+  background: #edf1f6;
+  color: #40536d;
+  font-size: 11px;
+}
+
+.personnel-status.delivered {
+  background: #e5f4eb;
+  color: #267044;
+}
+
+.personnel-status.cancelled {
+  background: #fbe9e9;
+  color: #a43a3a;
+}
+
+.personnel-status.on_the_way {
+  background: #e8effb;
+  color: #315b9a;
+}
+
+.personnel-section-heading {
+  margin-bottom: 20px;
+}
+
+.personnel-detail-card {
+  margin-bottom: 15px;
+  padding: 18px;
+  background: white;
+  border: 1px solid #e0e4ea;
+  border-radius: 7px;
+}
+
+.personnel-detail-card h3 {
+  margin: 0 0 15px;
+  font-size: 16px;
+  color: #172b4d;
+}
+
+.personnel-detail-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 9px 0;
+  border-bottom: 1px solid #edf0f3;
+  font-size: 13px;
+}
+
+.personnel-detail-row:last-child {
+  border-bottom: none;
+}
+
+.personnel-detail-row span {
+  color: #687386;
+  flex-shrink: 0;
+}
+
+.personnel-detail-row strong {
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.personnel-product-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.personnel-product-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #edf0f3;
+  font-size: 13px;
+}
+
+.personnel-product-row div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.personnel-product-row div span {
+  color: #687386;
+  font-size: 12px;
+}
+
+.personnel-product-row > strong {
+  white-space: nowrap;
+}
+
+.personnel-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding-top: 16px;
+  margin-top: 5px;
+  font-size: 15px;
+}
+
+.personnel-total strong {
+  color: #172b4d;
+  font-size: 18px;
+}
+
+.personnel-complete-button {
+  width: 100%;
+  min-height: 49px;
+  margin-top: 5px;
+  border: none;
+  border-radius: 6px;
+  background: #1e6b45;
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.personnel-complete-button:hover {
+  background: #185638;
+}
+
+.personnel-complete-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.personnel-delivered,
+.personnel-info {
+  padding: 14px;
+  margin-top: 10px;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.personnel-delivered {
+  background: #e5f4eb;
+  color: #267044;
+}
+
+.personnel-info {
+  background: #edf1f6;
+  color: #40536d;
+}
+
+.personnel-message {
+  padding: 12px 14px;
+  margin-bottom: 15px;
+  border-radius: 5px;
+  font-size: 13px;
+}
+
+.personnel-message.error {
+  background: #fbe9e9;
+  color: #a43a3a;
+}
+
+.personnel-message.success {
+  background: #e5f4eb;
+  color: #267044;
+}
+
+.personnel-empty {
+  padding: 25px 15px;
+  background: white;
+  border: 1px solid #e0e4ea;
+  border-radius: 7px;
+  color: #687386;
+  text-align: center;
+  font-size: 14px;
+}
+
+.personnel-delivered-section,
+.personnel-history-section {
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid #e0e4ea;
+}
+
+.personnel-history-section > .personnel-order-list {
+  margin-top: 14px;
+}
+
+.personnel-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 27, 45, 0.55);
+}
+
+.personnel-password-modal {
+  width: 100%;
+  max-width: 430px;
+  padding: 23px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+}
+
+.personnel-modal-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 22px;
+}
+
+.personnel-modal-heading h2 {
+  margin: 0;
+  color: #172b4d;
+  font-size: 20px;
+}
+
+.personnel-modal-heading button {
+  border: none;
+  background: transparent;
+  color: #687386;
+  font-size: 27px;
+  cursor: pointer;
+}
+
+.personnel-password-modal form {
+  display: flex;
+  flex-direction: column;
+}
+
+.personnel-password-modal label {
+  margin: 12px 0 7px;
+  color: #34445c;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.personnel-password-modal input {
+  width: 100%;
+  min-height: 42px;
+  padding: 9px 11px;
+  border: 1px solid #d5dbe4;
+  border-radius: 5px;
+  outline: none;
+  font-size: 14px;
+}
+
+.personnel-password-modal input:focus {
+  border-color: #526d91;
+}
+
+.personnel-password-modal .personnel-message {
+  margin-top: 15px;
+}
+
+.personnel-password-modal .personnel-complete-button {
+  margin-top: 20px;
+}
+
+@media (max-width: 600px) {
+  .personnel-header {
+    padding: 12px 15px;
+  }
+
+  .personnel-header h1 {
+    font-size: 16px;
+  }
+
+  .personnel-user {
+    gap: 7px;
+  }
+
+  .personnel-user span {
+    max-width: 90px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .personnel-user button,
+  .personnel-password-button {
+    padding: 7px 8px;
+    font-size: 11px;
+  }
+
+  .personnel-content {
+    padding: 22px 14px;
+  }
+
+  .personnel-page-heading h2,
+  .personnel-section-heading h2 {
+    font-size: 19px;
+  }
+
+  .personnel-page-heading p,
+  .personnel-section-heading p {
+    font-size: 12px;
+  }
+
+  .personnel-shipment-card,
+  .personnel-order-card {
+    padding: 14px;
+  }
+
+  .personnel-card-top strong {
+    font-size: 14px;
+  }
+
+  .personnel-detail-card {
+    padding: 15px;
+  }
+
+  .personnel-detail-row {
+    font-size: 12px;
+  }
+
+  .personnel-product-row {
+    font-size: 12px;
+  }
+
+  .personnel-total strong {
+    font-size: 16px;
+  }
+
+  .personnel-password-modal {
+    padding: 18px;
+  }
+}

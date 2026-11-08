@@ -130,7 +130,9 @@ router.post(
 
       const customer = customerResult.rows[0];
 
-      // Müşterinin ilçesine uygun ilk siparişe açık sevkiyatı bul.
+      // Müşterinin ilçesine uygun ilk normal sevkiyatı bul.
+      // İstisnai sevkiyatlar route_schedule_id NULL olduğu için
+      // bu sorguya dahil edilmez.
       const shipmentResult = await client.query(
         `SELECT
             s.id,
@@ -184,7 +186,7 @@ router.post(
 
       const shipment = shipmentResult.rows[0];
 
-      // Siparişi otomatik belirlenen sevkiyata bağla.
+      // Siparişi otomatik belirlenen normal sevkiyata bağla.
       const orderResult = await client.query(
         `INSERT INTO orders
           (
@@ -319,6 +321,7 @@ router.get(
 // --------------------------------------------------
 // ADMİN MÜŞTERİ ADINA SİPARİŞ OLUŞTURMA
 // POST /orders/admin-create
+// Normal ve istisnai sevkiyatlarda kullanılabilir.
 // Sipariş son saati kontrol edilmez.
 // --------------------------------------------------
 
@@ -371,25 +374,37 @@ router.post(
 
       const customer = customerResult.rows[0];
 
+      // Seçilen sevkiyatın müşterinin ilçesine uygun olduğunu kontrol et.
+      // Normal sevkiyatlarda aktif rota takvimi de kontrol edilir.
+      // İstisnai sevkiyatlarda route_schedule_id NULL olduğundan
+      // normal teslimat günü kontrolü uygulanmaz.
       const shipmentResult = await client.query(
         `SELECT
             s.id,
             s.shipment_date,
+            s.route_schedule_id,
             r.id AS route_id
          FROM shipments s
          INNER JOIN routes r
            ON r.id = s.route_id
          INNER JOIN route_districts rd
            ON rd.route_id = r.id
-         INNER JOIN route_schedules rs
-           ON rs.route_id = r.id
-           AND rs.delivery_day =
-               EXTRACT(ISODOW FROM s.shipment_date)::int
-           AND rs.active = TRUE
+         LEFT JOIN route_schedules rs
+           ON rs.id = s.route_schedule_id
+          AND rs.route_id = r.id
+          AND rs.active = TRUE
          WHERE s.id = $1
            AND rd.district_id = $2
            AND r.active = TRUE
            AND s.status = 'PLANNED'
+           AND (
+             s.route_schedule_id IS NULL
+             OR (
+               rs.id IS NOT NULL
+               AND rs.delivery_day =
+                   EXTRACT(ISODOW FROM s.shipment_date)::int
+             )
+           )
          FOR UPDATE OF s`,
         [shipmentId, customer.district_id]
       );
@@ -400,7 +415,7 @@ router.post(
 
         return res.status(400).json({
           message:
-            "Seçilen sevkiyat müşterinin ilçesine uygun değil veya planlanmış durumda değil",
+            "Seçilen sevkiyat müşterinin ilçesine uygun değil, aktif değil veya planlanmış durumda değil",
         });
       }
 

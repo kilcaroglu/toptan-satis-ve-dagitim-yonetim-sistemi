@@ -4,6 +4,7 @@ import ApplicationPage from "./pages/AdminPages/ApplicationPage";
 import ApplicationStatusPage from "./pages/AdminPages/ApplicationStatusPage";
 import AdminDashboard from "./pages/AdminPages/AdminDashboard";
 import CustomerDashboard from "./pages/CustomerPages/CustomerDashboard";
+import PersonnelDashboard from "./pages/PersonnelPages/PersonnelDashboard";
 
 const SESSION_KEY = "session";
 
@@ -88,6 +89,13 @@ function App() {
 
     if (session.user?.role === "CUSTOMER") {
       return <CustomerDashboard session={session} onLogout={handleLogout} />;
+    }
+
+    if (
+      session.user?.role === "DRIVER" ||
+      session.user?.role === "DISTRIBUTOR"
+    ) {
+      return <PersonnelDashboard session={session} onLogout={handleLogout} />;
     }
 
     return (
