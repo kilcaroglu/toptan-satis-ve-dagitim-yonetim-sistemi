@@ -311,6 +311,10 @@ function AdminFleetPage({ session }) {
     (person) => person.role === "DISTRIBUTOR"
   ).length;
 
+  const collectorCount = personnel.filter(
+    (person) => person.role === "COLLECTOR"
+  ).length;
+
   const activePersonnelCount = personnel.filter(
     (person) => person.active
   ).length;
@@ -524,6 +528,11 @@ function AdminFleetPage({ session }) {
             </div>
 
             <div className="fleet-summary-card">
+              <span>Tahsildar</span>
+              <strong>{collectorCount}</strong>
+            </div>
+
+            <div className="fleet-summary-card">
               <span>Aktif Personel</span>
               <strong>{activePersonnelCount}</strong>
             </div>
@@ -595,7 +604,11 @@ function AdminFleetPage({ session }) {
                     <td>
                       {person.role === "DRIVER"
                         ? "Sürücü"
-                        : "Dağıtım Personeli"}
+                        : person.role === "DISTRIBUTOR"
+                          ? "Dağıtım Personeli"
+                          : person.role === "COLLECTOR"
+                            ? "Tahsildar"
+                            : person.role}
                     </td>
 
                     <td>
@@ -841,6 +854,7 @@ function AdminFleetPage({ session }) {
                 >
                   <option value="DRIVER">Sürücü</option>
                   <option value="DISTRIBUTOR">Dağıtım Personeli</option>
+                  <option value="COLLECTOR">Tahsildar</option>
                 </select>
               </label>
 

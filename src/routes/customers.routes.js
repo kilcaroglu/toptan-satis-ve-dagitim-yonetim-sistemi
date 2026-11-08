@@ -9,7 +9,7 @@ import {
 
 const router = express.Router();
 
-router.get("/", authMiddleware, async (req, res) => {
+router.get("/", authMiddleware, roleMiddleware("ADMIN", "COLLECTOR"), async (req, res) => {
     try {
         const result = await pool.query(
             `SELECT

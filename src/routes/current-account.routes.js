@@ -1,3 +1,4 @@
+
 import express from "express";
 import pool from "../db.js";
 import { authMiddleware, roleMiddleware } from "../authMiddleware.js";
@@ -7,7 +8,7 @@ const router = express.Router();
 router.get(
   "/:id/current-account",
   authMiddleware,
-  roleMiddleware("ADMIN"),
+  roleMiddleware("ADMIN", "COLLECTOR"),
   async (req, res) => {
     try {
       const customerId = Number(req.params.id);
@@ -20,25 +21,25 @@ router.get(
 
       const result = await pool.query(
         `SELECT
-                    c.id AS customer_id,
-                    c.company_name,
-                    COALESCE(
-                        SUM(
-                            CASE
-                                WHEN t.transaction_type = 'DEBIT'
-                                    THEN t.amount
-                                WHEN t.transaction_type = 'PAYMENT'
-                                    THEN -t.amount
-                                ELSE 0
-                            END
-                        ),
-                        0
-                    ) AS balance
-                 FROM customers c
-                 LEFT JOIN current_account_transactions t
-                    ON t.customer_id = c.id
-                 WHERE c.id = $1
-                 GROUP BY c.id, c.company_name`,
+            c.id AS customer_id,
+            c.company_name,
+            COALESCE(
+                SUM(
+                    CASE
+                        WHEN t.transaction_type = 'DEBIT'
+                            THEN t.amount
+                        WHEN t.transaction_type = 'PAYMENT'
+                            THEN -t.amount
+                        ELSE 0
+                    END
+                ),
+                0
+            ) AS balance
+         FROM customers c
+         LEFT JOIN current_account_transactions t
+            ON t.customer_id = c.id
+         WHERE c.id = $1
+         GROUP BY c.id, c.company_name`,
         [customerId],
       );
 
@@ -96,8 +97,8 @@ router.post(
 
       const existingPayment = await client.query(
         `SELECT *
-              FROM current_account_transactions
-              WHERE idempotency_key = $1`,
+         FROM current_account_transactions
+         WHERE idempotency_key = $1`,
         [idempotencyKey.trim()],
       );
 
@@ -118,16 +119,16 @@ router.post(
 
         const balanceResult = await client.query(
           `SELECT COALESCE(
-                      SUM(
-                          CASE
-                              WHEN transaction_type = 'DEBIT' THEN amount
-                              WHEN transaction_type = 'PAYMENT' THEN -amount
-                              ELSE 0
-                          END
-                      ), 0
-                  ) AS balance
-                  FROM current_account_transactions
-                  WHERE customer_id = $1`,
+              SUM(
+                  CASE
+                      WHEN transaction_type = 'DEBIT' THEN amount
+                      WHEN transaction_type = 'PAYMENT' THEN -amount
+                      ELSE 0
+                  END
+              ), 0
+          ) AS balance
+          FROM current_account_transactions
+          WHERE customer_id = $1`,
           [customerId],
         );
 
@@ -142,9 +143,9 @@ router.post(
 
       const customerResult = await client.query(
         `SELECT id
-                 FROM customers
-                 WHERE id = $1 AND active = TRUE
-                 FOR UPDATE`,
+         FROM customers
+         WHERE id = $1 AND active = TRUE
+         FOR UPDATE`,
         [customerId],
       );
 
@@ -158,17 +159,17 @@ router.post(
 
       const balanceResult = await client.query(
         `SELECT COALESCE(
-                    SUM(
-                        CASE
-                            WHEN transaction_type = 'DEBIT' THEN amount
-                            WHEN transaction_type = 'PAYMENT' THEN -amount
-                            ELSE 0
-                        END
-                    ),
-                    0
-                ) AS balance
-                 FROM current_account_transactions
-                 WHERE customer_id = $1`,
+            SUM(
+                CASE
+                    WHEN transaction_type = 'DEBIT' THEN amount
+                    WHEN transaction_type = 'PAYMENT' THEN -amount
+                    ELSE 0
+                END
+            ),
+            0
+        ) AS balance
+         FROM current_account_transactions
+         WHERE customer_id = $1`,
         [customerId],
       );
 
@@ -185,9 +186,9 @@ router.post(
 
       const paymentResult = await client.query(
         `INSERT INTO current_account_transactions
-                    (customer_id, transaction_type, amount, description, created_by, idempotency_key)
-                VALUES ($1, 'PAYMENT', $2, $3, $4, $5)
-                RETURNING *`,
+            (customer_id, transaction_type, amount, description, created_by, idempotency_key)
+         VALUES ($1, 'PAYMENT', $2, $3, $4, $5)
+         RETURNING *`,
         [
           customerId,
           amount,
@@ -207,12 +208,11 @@ router.post(
     } catch (error) {
       await client.query("ROLLBACK");
 
-      // Aynı işlem anahtarıyla eşzamanlı kayıt oluşmuş olabilir.
       if (error.code === "23505") {
         const existingResult = await pool.query(
           `SELECT *
-                      FROM current_account_transactions
-                      WHERE idempotency_key = $1`,
+           FROM current_account_transactions
+           WHERE idempotency_key = $1`,
           [idempotencyKey.trim()],
         );
 
@@ -226,16 +226,16 @@ router.post(
           ) {
             const balanceResult = await pool.query(
               `SELECT COALESCE(
-                                  SUM(
-                                      CASE
-                                          WHEN transaction_type = 'DEBIT' THEN amount
-                                          WHEN transaction_type = 'PAYMENT' THEN -amount
-                                          ELSE 0
-                                      END
-                                  ), 0
-                              ) AS balance
-                              FROM current_account_transactions
-                              WHERE customer_id = $1`,
+                  SUM(
+                      CASE
+                          WHEN transaction_type = 'DEBIT' THEN amount
+                          WHEN transaction_type = 'PAYMENT' THEN -amount
+                          ELSE 0
+                      END
+                  ), 0
+              ) AS balance
+              FROM current_account_transactions
+              WHERE customer_id = $1`,
               [customerId],
             );
 
@@ -279,8 +279,8 @@ router.get(
 
       const customerResult = await pool.query(
         `SELECT id, company_name
-                 FROM customers
-                 WHERE id = $1`,
+         FROM customers
+         WHERE id = $1`,
         [customerId],
       );
 
@@ -292,16 +292,16 @@ router.get(
 
       const transactionsResult = await pool.query(
         `SELECT
-                    id,
-                    order_id,
-                    transaction_type,
-                    amount,
-                    description,
-                    created_by,
-                    created_at
-                 FROM current_account_transactions
-                 WHERE customer_id = $1
-                 ORDER BY created_at DESC, id DESC`,
+            id,
+            order_id,
+            transaction_type,
+            amount,
+            description,
+            created_by,
+            created_at
+         FROM current_account_transactions
+         WHERE customer_id = $1
+         ORDER BY created_at DESC, id DESC`,
         [customerId],
       );
 

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import LoginPage from "./pages/LoginPages/LoginPage";
 import ApplicationPage from "./pages/AdminPages/ApplicationPage";
@@ -5,6 +6,7 @@ import ApplicationStatusPage from "./pages/AdminPages/ApplicationStatusPage";
 import AdminDashboard from "./pages/AdminPages/AdminDashboard";
 import CustomerDashboard from "./pages/CustomerPages/CustomerDashboard";
 import PersonnelDashboard from "./pages/PersonnelPages/PersonnelDashboard";
+import CollectorDashboard from "./pages/CollectorPages/CollectorDashboard";
 
 const SESSION_KEY = "session";
 
@@ -96,6 +98,10 @@ function App() {
       session.user?.role === "DISTRIBUTOR"
     ) {
       return <PersonnelDashboard session={session} onLogout={handleLogout} />;
+    }
+
+    if (session.user?.role === "COLLECTOR") {
+      return <CollectorDashboard session={session} onLogout={handleLogout} />;
     }
 
     return (

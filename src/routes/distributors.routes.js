@@ -9,7 +9,7 @@ import {
 
 const router = express.Router();
 
-// Şoför ve dağıtıcıları listele
+// Şoför, dağıtıcı ve tahsildarları listele
 router.get(
   "/",
   authMiddleware,
@@ -19,7 +19,7 @@ router.get(
       const result = await pool.query(
         `SELECT id, name, email, role, phone, active, created_at
          FROM users
-         WHERE role IN ('DRIVER', 'DISTRIBUTOR')
+         WHERE role IN ('DRIVER', 'DISTRIBUTOR', 'COLLECTOR')
          ORDER BY name`
       );
 
@@ -34,7 +34,7 @@ router.get(
   }
 );
 
-// Yeni şoför veya dağıtıcı ekle
+// Yeni şoför, dağıtıcı veya tahsildar ekle
 router.post(
   "/",
   authMiddleware,
@@ -55,9 +55,9 @@ router.post(
         });
       }
 
-      if (!["DRIVER", "DISTRIBUTOR"].includes(role)) {
+      if (!["DRIVER", "DISTRIBUTOR", "COLLECTOR"].includes(role)) {
         return res.status(400).json({
-          message: "Personel görevi şoför veya dağıtıcı olmalıdır"
+          message: "Personel görevi geçersiz"
         });
       }
 
@@ -143,7 +143,7 @@ router.patch(
         `UPDATE users
          SET active = $1
          WHERE id = $2
-           AND role IN ('DRIVER', 'DISTRIBUTOR')
+           AND role IN ('DRIVER', 'DISTRIBUTOR', 'COLLECTOR')
          RETURNING id, name, email, role, phone, active, created_at`,
         [active, Number(id)]
       );
