@@ -43,7 +43,7 @@ async function updateOrderTotal(client, orderId) {
 
 
 // --------------------------------------------------
-// MÜŞTERİNİN TESLİMAT GÜNLERİNİ GETİRME
+// MÜŞTERİNİN TESLİMAT VE SON SİPARİŞ BİLGİLERİNİ GETİRME
 // GET /orders/delivery-days
 // --------------------------------------------------
 
@@ -54,7 +54,10 @@ router.get(
   async (req, res) => {
     try {
       const result = await pool.query(
-        `SELECT DISTINCT rs.delivery_day
+        `SELECT DISTINCT
+            rs.delivery_day,
+            rs.order_deadline_day,
+            TO_CHAR(rs.order_deadline_time, 'HH24:MI') AS order_deadline_time
          FROM customers c
          INNER JOIN route_districts rd
            ON rd.district_id = c.district_id
@@ -66,20 +69,25 @@ router.get(
            AND c.active = TRUE
            AND r.active = TRUE
            AND rs.active = TRUE
-         ORDER BY rs.delivery_day`,
+         ORDER BY
+            rs.delivery_day,
+            rs.order_deadline_day,
+            rs.order_deadline_time`,
         [req.user.id]
       );
 
       return res.json({
-        delivery_days: result.rows.map(
-          row => Number(row.delivery_day)
-        ),
+        delivery_days: result.rows.map(row => ({
+          delivery_day: Number(row.delivery_day),
+          order_deadline_day: Number(row.order_deadline_day),
+          order_deadline_time: row.order_deadline_time,
+        })),
       });
     } catch (error) {
-      console.error("Teslimat günleri hatası:", error);
+      console.error("Teslimat bilgileri hatası:", error);
 
       return res.status(500).json({
-        message: "Teslimat günleri getirilemedi",
+        message: "Teslimat bilgileri getirilemedi",
       });
     }
   }

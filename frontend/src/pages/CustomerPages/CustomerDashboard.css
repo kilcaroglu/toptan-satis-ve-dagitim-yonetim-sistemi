@@ -27,22 +27,13 @@
   overflow-y: auto;
 }
 
-.customer-main {
-  flex: 1;
-  min-width: 0;
-  height: 100vh;
-  overflow-y: auto;
-  padding: 28px 34px;
-}
-
-/* Logo ve marka */
-
 .customer-brand {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 4px 8px 30px;
   border-bottom: 1px solid #354766;
+  flex-shrink: 0;
 }
 
 .customer-brand-icon {
@@ -67,10 +58,9 @@
   font-size: 12px;
 }
 
-/* Sol menü */
-
 .customer-menu {
   padding-top: 28px;
+  flex: 1;
 }
 
 .customer-menu-title {
@@ -116,8 +106,6 @@
   color: #172b4d;
   font-size: 11px;
 }
-
-/* Kullanıcı bilgileri ve çıkış */
 
 .customer-sidebar-bottom {
   margin-top: auto;
@@ -173,36 +161,13 @@
   background: #2d4263;
 }
 
-/* Hamburger menü */
-
-.customer-menu-toggle {
-  display: none;
-  width: 40px;
-  height: 40px;
-  flex-shrink: 0;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 5px;
-  border: 1px solid #d5dce5;
-  border-radius: 6px;
-  background: white;
-  cursor: pointer;
+.customer-main {
+  flex: 1;
+  min-width: 0;
+  height: 100vh;
+  padding: 28px 34px;
+  overflow-y: auto;
 }
-
-.customer-menu-toggle span {
-  display: block;
-  width: 19px;
-  height: 2px;
-  border-radius: 2px;
-  background: #172b4d;
-}
-
-.customer-menu-overlay {
-  display: none;
-}
-
-/* Üst başlık */
 
 .customer-header {
   display: flex;
@@ -238,8 +203,6 @@
 .customer-content {
   width: 100%;
 }
-
-/* Hoş geldiniz alanı */
 
 .customer-welcome {
   display: flex;
@@ -288,8 +251,6 @@
   font-size: 65px;
 }
 
-/* Özet kartları */
-
 .customer-summary {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -316,8 +277,6 @@
   color: #203b64;
   font-size: 27px;
 }
-
-/* Ana sayfa ve bölüm başlıkları */
 
 .customer-home-section,
 .customer-order-detail {
@@ -354,8 +313,6 @@
   color: #7b8797;
   font-size: 13px;
 }
-
-/* Ürün filtreleri */
 
 .customer-filters {
   display: flex;
@@ -495,6 +452,37 @@
   font-size: 12px;
 }
 
+/* Teslimat günü ve son sipariş saati */
+
+.customer-delivery-schedule {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.customer-delivery-schedule-item {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 190px;
+  padding: 12px 14px;
+  border: 1px solid #dce5f0;
+  border-radius: 6px;
+  background: #f5f8fc;
+}
+
+.customer-delivery-schedule-item strong {
+  color: #203b64;
+  font-size: 13px;
+}
+
+.customer-delivery-schedule-item span {
+  color: #65738a;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 /* Genel tablolar */
 
 .customer-table-wrapper {
@@ -615,6 +603,7 @@
 
 .customer-shipment-select {
   flex: 1;
+  min-width: 0;
 }
 
 .customer-shipment-select h3 {
@@ -663,6 +652,36 @@
 .customer-cart-total button:disabled {
   background: #aab3bf;
   cursor: not-allowed;
+}
+
+/* Bir sonraki teslimat tarihi */
+
+.customer-next-delivery {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 18px;
+  padding: 14px 16px;
+  border: 1px solid #dce5f0;
+  border-radius: 6px;
+  background: #f5f8fc;
+}
+
+.customer-next-delivery span {
+  color: #65738a;
+  font-size: 12px;
+}
+
+.customer-next-delivery strong {
+  color: #203b64;
+  font-size: 16px;
+  text-transform: capitalize;
+}
+
+.customer-next-delivery small {
+  color: #7b8797;
+  font-size: 11px;
+  line-height: 1.5;
 }
 
 /* Sipariş detayları */
@@ -727,6 +746,123 @@
   font-size: 13px;
 }
 
+/* Şifre değiştirme penceresi */
+
+.customer-password-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 28, 48, 0.58);
+}
+
+.customer-password-modal {
+  width: 100%;
+  max-width: 440px;
+  padding: 25px;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+}
+
+.customer-password-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 22px;
+}
+
+.customer-password-heading h2 {
+  margin: 0 0 6px;
+  color: #24364d;
+  font-size: 20px;
+}
+
+.customer-password-heading p {
+  margin: 0;
+  color: #7b8797;
+  font-size: 13px;
+}
+
+.customer-password-heading > button {
+  border: 0;
+  background: transparent;
+  color: #65738a;
+  font-size: 25px;
+  cursor: pointer;
+}
+
+.customer-password-modal form {
+  display: flex;
+  flex-direction: column;
+}
+
+.customer-password-modal label {
+  margin: 0 0 7px;
+  color: #35445a;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.customer-password-modal input {
+  width: 100%;
+  min-height: 42px;
+  margin-bottom: 16px;
+  padding: 9px 11px;
+  border: 1px solid #dce2e9;
+  border-radius: 5px;
+  outline: none;
+}
+
+.customer-password-modal input:focus {
+  border-color: #496b98;
+}
+
+.customer-password-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 7px;
+}
+
+.customer-password-actions button {
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.customer-password-cancel {
+  border: 1px solid #d5dce5;
+  background: #fff;
+  color: #35445a;
+}
+
+.customer-password-submit {
+  border: 1px solid #203b64;
+  background: #203b64;
+  color: #fff;
+}
+
+.customer-password-actions button:disabled,
+.customer-password-heading > button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Mobil menü butonu: masaüstünde gizli */
+
+.customer-mobile-menu-button {
+  display: none;
+}
+
+.customer-menu-overlay {
+  display: none;
+}
+
 /* Tablet */
 
 @media (max-width: 1100px) {
@@ -735,70 +871,51 @@
   }
 }
 
-/* Mobil uyumluluk ve hamburger menü */
+/* Mobil uyumluluk ve açılır sol menü */
 
 @media (max-width: 760px) {
   .customer-layout {
+    position: relative;
     flex-direction: column;
     height: auto;
     min-height: 100vh;
     overflow: visible;
   }
 
-  /* Sol menü kapalıyken ekranın dışında */
-
+  /* Sol menü kapalıyken ekranın dışında durur. */
   .customer-sidebar {
     position: fixed;
     top: 0;
     left: 0;
-    bottom: 0;
     z-index: 1001;
-
     width: 270px;
     min-width: 270px;
     height: 100vh;
-    height: 100dvh;
-
-    padding: 20px 16px;
+    min-height: 100vh;
+    padding: 22px 16px;
+    flex-direction: column;
+    justify-content: flex-start;
     overflow-y: auto;
-
+    background: #172b4d;
     transform: translateX(-100%);
     transition: transform 0.25s ease;
   }
 
-  /* Sol menü açıkken */
-
-  .customer-sidebar.open {
+  /* Menü açıldığında görünür. */
+  .customer-sidebar.mobile-open {
     transform: translateX(0);
   }
 
-  /* Menü açıldığında arka plan */
-
-  .customer-menu-overlay {
-    display: block;
-    position: fixed;
-    inset: 0;
-    z-index: 1000;
-    background: rgba(0, 0, 0, 0.45);
-  }
-
-  /* Hamburger butonu */
-
-  .customer-menu-toggle {
-    display: flex;
-  }
-
-  /* Menü içeriği */
-
   .customer-brand {
-    padding-bottom: 15px;
+    padding: 4px 8px 22px;
   }
 
   .customer-menu {
     display: flex;
     flex-direction: column;
     gap: 5px;
-    padding-top: 20px;
+    padding-top: 22px;
+    flex: 1;
   }
 
   .customer-menu-title {
@@ -807,12 +924,10 @@
 
   .customer-menu button {
     width: 100%;
-    margin: 0;
+    margin: 0 0 4px;
     padding: 13px 12px;
     font-size: 14px;
   }
-
-  /* Kullanıcı bilgileri ve çıkış */
 
   .customer-sidebar-bottom {
     display: block;
@@ -828,54 +943,99 @@
     width: 100%;
   }
 
-  /* Ana içerik */
+  /* Menü açıkken arka planı karartan katman. */
+  .customer-menu-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.45);
+  }
 
   .customer-main {
     width: 100%;
     height: auto;
-    min-height: 0;
+    min-height: 100vh;
     overflow: visible;
     padding: 20px 14px;
   }
 
-  /* Üst başlık */
-
   .customer-header {
     align-items: center;
+    justify-content: flex-start;
     gap: 12px;
   }
 
-  .customer-header-title {
+  /* Üç çizgili menü butonu. */
+  .customer-mobile-menu-button {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    width: 42px;
+    min-width: 42px;
+    height: 42px;
+    padding: 0;
+    border: 1px solid #d5dce5;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+  }
+
+  .customer-mobile-menu-button span {
+    display: block;
+    width: 19px;
+    height: 2px;
+    border-radius: 2px;
+    background: #203b64;
+  }
+
+  .customer-header > div {
     flex: 1;
     min-width: 0;
   }
 
   .customer-header h1 {
-    font-size: 21px;
+    font-size: 19px;
   }
 
   .customer-header p {
     font-size: 11px;
+    line-height: 1.4;
   }
 
   .customer-header-cart {
+    flex-shrink: 0;
     padding: 9px;
     font-size: 12px;
-    white-space: nowrap;
   }
-
-  /* Ana sayfa */
 
   .customer-welcome {
     min-height: auto;
     padding: 22px;
   }
 
+  .customer-welcome h2 {
+    font-size: 21px;
+  }
+
   .customer-welcome-icon {
     display: none;
   }
 
-  /* Filtreler */
+  .customer-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .customer-summary-card {
+    padding: 16px;
+  }
+
+  .customer-summary-card strong {
+    font-size: 23px;
+  }
 
   .customer-filters {
     flex-direction: column;
@@ -886,15 +1046,23 @@
     width: 100%;
   }
 
-  /* Sepet */
-
   .customer-checkout {
     flex-direction: column;
+    gap: 22px;
   }
 
   .customer-delivery-info {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .customer-delivery-schedule {
+    width: 100%;
+  }
+
+  .customer-delivery-schedule-item {
+    width: 100%;
+    min-width: 0;
   }
 
   .customer-product-actions {
@@ -906,9 +1074,55 @@
     text-align: left;
   }
 
-  /* Tablolar */
-
   .customer-table {
     min-width: 650px;
+  }
+
+  .customer-home-section,
+  .customer-order-detail {
+    padding: 16px;
+  }
+
+  .customer-password-modal {
+    padding: 20px;
+  }
+}
+
+/* Çok dar ekranlar */
+
+@media (max-width: 400px) {
+  .customer-header {
+    gap: 8px;
+  }
+
+  .customer-header h1 {
+    font-size: 17px;
+  }
+
+  .customer-header p {
+    font-size: 10px;
+  }
+
+  .customer-mobile-menu-button {
+    width: 38px;
+    min-width: 38px;
+    height: 38px;
+  }
+
+  .customer-header-cart {
+    padding: 8px 6px;
+    font-size: 11px;
+  }
+
+  .customer-summary-card {
+    padding: 13px;
+  }
+
+  .customer-summary-card span {
+    font-size: 11px;
+  }
+
+  .customer-summary-card strong {
+    font-size: 21px;
   }
 }

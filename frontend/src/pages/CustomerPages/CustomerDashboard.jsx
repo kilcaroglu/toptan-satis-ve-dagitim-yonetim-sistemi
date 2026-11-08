@@ -41,30 +41,86 @@ function formatDate(value) {
   });
 }
 
+// Son sipariş günü ve saatini okunabilir hale getirir.
+function formatDeliveryDeadline(day) {
+  const deadlineDay = Number(day.order_deadline_day);
+  const deadlineTime = day.order_deadline_time;
+
+  if (
+    !deadlineDay ||
+    !deadlineTime ||
+    !DELIVERY_DAY_LABELS[deadlineDay]
+  ) {
+    return "Son sipariş bilgisi tanımlanmamış.";
+  }
+
+  return `${DELIVERY_DAY_LABELS[deadlineDay]} günü saat ${deadlineTime}'e kadar`;
+}
+
+// Teslimat günlerine göre bir sonraki planlı teslimat tarihini hesaplar.
+function getNextDeliveryDate(deliveryDays) {
+  if (!deliveryDays || deliveryDays.length === 0) {
+    return null;
+  }
+
+  const dayNumbers = deliveryDays
+    .map(day =>
+      Number(
+        typeof day === "object" ? day.delivery_day : day
+      )
+    )
+    .filter(day => day >= 1 && day <= 7);
+
+  if (dayNumbers.length === 0) {
+    return null;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // JavaScript'te Pazar 0, Pazartesi 1'dir.
+  // Bizim sistemimizde Pazar 7 olarak tutuluyor.
+  const todayNumber = today.getDay() === 0 ? 7 : today.getDay();
+
+  const upcomingDates = dayNumbers.map(dayNumber => {
+    let difference = (dayNumber - todayNumber + 7) % 7;
+
+    // Bugünü teslimat tarihi olarak göstermiyoruz.
+    if (difference === 0) {
+      difference = 7;
+    }
+
+    const date = new Date(today);
+    date.setDate(today.getDate() + difference);
+
+    return date;
+  });
+
+  upcomingDates.sort((a, b) => a - b);
+
+  return upcomingDates[0];
+}
+
 function CustomerDashboard({ session, onLogout }) {
   const [activePage, setActivePage] = useState("home");
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [deliveryDays, setDeliveryDays] = useState([]);
   const [productQuantities, setProductQuantities] = useState({});
 
-  // Her müşteri için ayrı sepet anahtarı
-  const cartStorageKey = `customer_cart_${
-    session?.user?.id ??
-    session?.user?.user_id ??
-    session?.user?.email ??
-    "default"
+  // Her müşterinin sepetini ayrı bir anahtarda saklıyoruz.
+  const cartStorageKey = `customer-cart-${
+    session?.user?.id ?? session?.user?.email ?? "default"
   }`;
 
-  // Sepeti localStorage üzerinden yükle
+  // Sayfa açıldığında kayıtlı sepeti geri yükle.
   const [cart, setCart] = useState(() => {
     try {
       const savedCart = localStorage.getItem(cartStorageKey);
       return savedCart ? JSON.parse(savedCart) : [];
-    } catch (error) {
-      console.error("Kayıtlı sepet yüklenemedi:", error);
+    } catch {
       return [];
     }
   });
@@ -76,17 +132,23 @@ function CustomerDashboard({ session, onLogout }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordLoading, setPasswordLoading] = useState(false);
+
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
 
   const token = session?.token;
 
-  // Sepetteki değişiklikleri otomatik kaydet
+  // Sepetteki her değişikliği tarayıcıya kaydet.
   useEffect(() => {
     try {
       localStorage.setItem(cartStorageKey, JSON.stringify(cart));
-    } catch (error) {
-      console.error("Sepet kaydedilemedi:", error);
+    } catch (err) {
+      console.error("Sepet kaydedilemedi:", err);
     }
   }, [cart, cartStorageKey]);
 
@@ -111,7 +173,6 @@ function CustomerDashboard({ session, onLogout }) {
 
   async function loadProducts() {
     const data = await apiRequest("/products");
-
     const productList = Array.isArray(data)
       ? data
       : data.products || [];
@@ -141,54 +202,22 @@ function CustomerDashboard({ session, onLogout }) {
     setDeliveryDays(days);
   }
 
-  // İlk açılışta verileri birbirinden bağımsız yükle
   useEffect(() => {
     async function loadInitialData() {
-      if (!token) {
-        setError("Oturum bilgisi bulunamadı. Lütfen tekrar giriş yapın.");
-        return;
-      }
-
       setLoading(true);
       setError("");
 
-      const results = await Promise.allSettled([
-        loadProducts(),
-        loadOrders(),
-        loadDeliveryDays(),
-      ]);
-
-      const errors = [];
-
-      if (results[0].status === "rejected") {
-        console.error(
-          "Ürünler yüklenemedi:",
-          results[0].reason
-        );
-        errors.push("Ürünler yüklenemedi.");
+      try {
+        await Promise.all([
+          loadProducts(),
+          loadOrders(),
+          loadDeliveryDays(),
+        ]);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
       }
-
-      if (results[1].status === "rejected") {
-        console.error(
-          "Siparişler yüklenemedi:",
-          results[1].reason
-        );
-        errors.push("Siparişler yüklenemedi.");
-      }
-
-      if (results[2].status === "rejected") {
-        console.error(
-          "Teslimat günleri yüklenemedi:",
-          results[2].reason
-        );
-        errors.push("Teslimat günleri yüklenemedi.");
-      }
-
-      if (errors.length > 0) {
-        setError(errors.join(" "));
-      }
-
-      setLoading(false);
     }
 
     loadInitialData();
@@ -228,6 +257,22 @@ function CustomerDashboard({ session, onLogout }) {
     );
   }, [cart]);
 
+  // Sepette gösterilecek bir sonraki planlı teslimat tarihi.
+  const nextDeliveryDate = useMemo(() => {
+    return getNextDeliveryDate(deliveryDays);
+  }, [deliveryDays]);
+
+  const formattedNextDeliveryDate = useMemo(() => {
+    if (!nextDeliveryDate) return "";
+
+    return nextDeliveryDate.toLocaleDateString("tr-TR", {
+      weekday: "long",
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
+  }, [nextDeliveryDate]);
+
   function addToCart(product, requestedQuantity) {
     setError("");
     setSuccess("");
@@ -246,9 +291,7 @@ function CustomerDashboard({ session, onLogout }) {
     const currentQuantity = existing ? existing.quantity : 0;
 
     if (currentQuantity + quantity > Number(product.stock)) {
-      setError(
-        "Sepete eklemek istediğiniz miktar mevcut stoktan fazla."
-      );
+      setError("Sepete eklemek istediğiniz miktar mevcut stoktan fazla.");
       return;
     }
 
@@ -330,9 +373,9 @@ function CustomerDashboard({ session, onLogout }) {
 
   function openCart() {
     setActivePage("cart");
+    setMobileMenuOpen(false);
     setError("");
     setSuccess("");
-    setMenuOpen(false);
   }
 
   async function createOrder() {
@@ -367,7 +410,6 @@ function CustomerDashboard({ session, onLogout }) {
 
       await loadOrders();
       setActivePage("orders");
-      setMenuOpen(false);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -397,25 +439,75 @@ function CustomerDashboard({ session, onLogout }) {
 
   function navigate(page) {
     setActivePage(page);
+    setMobileMenuOpen(false);
     setError("");
     setSuccess("");
     setSelectedOrder(null);
-    setMenuOpen(false);
+  }
+
+  async function changePassword(event) {
+    event.preventDefault();
+    setError("");
+    setSuccess("");
+
+    if (newPassword.length < 8) {
+      setError("Yeni şifre en az 8 karakter olmalıdır.");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError("Yeni şifreler birbiriyle eşleşmiyor.");
+      return;
+    }
+
+    if (currentPassword === newPassword) {
+      setError("Yeni şifreniz mevcut şifrenizden farklı olmalıdır.");
+      return;
+    }
+
+    setPasswordLoading(true);
+
+    try {
+      await apiRequest("/customers/change-password", {
+        method: "PATCH",
+        body: JSON.stringify({
+          current_password: currentPassword,
+          new_password: newPassword,
+        }),
+      });
+
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setShowPasswordModal(false);
+      setSuccess("Şifreniz başarıyla değiştirildi.");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setPasswordLoading(false);
+    }
+  }
+
+  function openPasswordModal() {
+    setMobileMenuOpen(false);
+    setError("");
+    setSuccess("");
+    setShowPasswordModal(true);
   }
 
   return (
     <div className="customer-layout">
-      {/* Mobil menü arka planı */}
-      {menuOpen && (
+      {mobileMenuOpen && (
         <div
           className="customer-menu-overlay"
-          onClick={() => setMenuOpen(false)}
+          onClick={() => setMobileMenuOpen(false)}
         />
       )}
 
-      {/* SOL MENÜ */}
       <aside
-        className={`customer-sidebar ${menuOpen ? "open" : ""}`}
+        className={`customer-sidebar ${
+          mobileMenuOpen ? "mobile-open" : ""
+        }`}
       >
         <div className="customer-brand">
           <div className="customer-brand-icon">K</div>
@@ -464,6 +556,14 @@ function CustomerDashboard({ session, onLogout }) {
             <span>▤</span>
             Siparişlerim
           </button>
+
+          <button
+            type="button"
+            onClick={openPasswordModal}
+          >
+            <span>🔒</span>
+            Şifre Değiştir
+          </button>
         </div>
 
         <div className="customer-sidebar-bottom">
@@ -491,22 +591,21 @@ function CustomerDashboard({ session, onLogout }) {
         </div>
       </aside>
 
-      {/* ANA İÇERİK */}
       <main className="customer-main">
         <header className="customer-header">
-          {/* Mobil hamburger butonu */}
           <button
-            className="customer-menu-toggle"
-            onClick={() => setMenuOpen(current => !current)}
+            type="button"
+            className="customer-mobile-menu-button"
+            onClick={() => setMobileMenuOpen(current => !current)}
             aria-label="Menüyü aç veya kapat"
-            aria-expanded={menuOpen}
+            aria-expanded={mobileMenuOpen}
           >
             <span></span>
             <span></span>
             <span></span>
           </button>
 
-          <div className="customer-header-title">
+          <div>
             <h1>
               {activePage === "home" && "Ana Sayfa"}
               {activePage === "products" && "Ürünler"}
@@ -584,23 +683,33 @@ function CustomerDashboard({ session, onLogout }) {
               <div>
                 <h3>Teslimat Günleriniz</h3>
                 <p>
-                  İlçeniz için belirlenen haftalık teslimat günleri
+                  İlçeniz için belirlenen haftalık teslimat ve sipariş
+                  son saatleri
                 </p>
               </div>
 
               {deliveryDays.length > 0 ? (
-                <div className="customer-delivery-days">
+                <div className="customer-delivery-schedule">
                   {deliveryDays.map((day, index) => {
                     const dayNumber = Number(
-                      typeof day === "object"
-                        ? day.delivery_day
-                        : day
+                      typeof day === "object" ? day.delivery_day : day
                     );
 
                     return (
-                      <span key={`${dayNumber}-${index}`}>
-                        {DELIVERY_DAY_LABELS[dayNumber] || "Gün bilgisi"}
-                      </span>
+                      <div
+                        className="customer-delivery-schedule-item"
+                        key={`${dayNumber}-${index}`}
+                      >
+                        <strong>
+                          {DELIVERY_DAY_LABELS[dayNumber] || "Gün bilgisi"} teslimatı
+                        </strong>
+
+                        {typeof day === "object" && (
+                          <span>
+                            Son sipariş: {formatDeliveryDeadline(day)}
+                          </span>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
@@ -907,28 +1016,53 @@ function CustomerDashboard({ session, onLogout }) {
 
                 <div className="customer-checkout">
                   <div className="customer-shipment-select">
-                    <h3>Teslimat Günleriniz</h3>
+                    <h3>Teslimat Bilgileri</h3>
+
                     <p>
                       Siparişiniz, ilçeniz için belirlenen uygun teslimat
-                      gününe göre otomatik planlanır.
+                      gününe göre planlanır.
                     </p>
 
                     {deliveryDays.length > 0 ? (
-                      <div className="customer-delivery-days">
-                        {deliveryDays.map((day, index) => {
-                          const dayNumber = Number(
-                            typeof day === "object"
-                              ? day.delivery_day
-                              : day
-                          );
+                      <>
+                        <div className="customer-delivery-schedule">
+                          {deliveryDays.map((day, index) => {
+                            const dayNumber = Number(
+                              typeof day === "object" ? day.delivery_day : day
+                            );
 
-                          return (
-                            <span key={`${dayNumber}-${index}`}>
-                              {DELIVERY_DAY_LABELS[dayNumber] || "Gün bilgisi"}
-                            </span>
-                          );
-                        })}
-                      </div>
+                            return (
+                              <div
+                                className="customer-delivery-schedule-item"
+                                key={`${dayNumber}-${index}`}
+                              >
+                                <strong>
+                                  {DELIVERY_DAY_LABELS[dayNumber] || "Gün bilgisi"} teslimatı
+                                </strong>
+
+                                {typeof day === "object" && (
+                                  <span>
+                                    Son sipariş: {formatDeliveryDeadline(day)}
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        <div className="customer-next-delivery">
+                          <span>Bir sonraki planlı teslimat tarihi</span>
+
+                          <strong>
+                            {formattedNextDeliveryDate || "Tarih hesaplanamadı"}
+                          </strong>
+
+                          <small>
+                            Teslimat tarihi, ilçenizin haftalık teslimat
+                            takvimine göre gösterilmektedir.
+                          </small>
+                        </div>
+                      </>
                     ) : (
                       <small>
                         İlçeniz için henüz teslimat günü tanımlanmamış.
@@ -942,7 +1076,11 @@ function CustomerDashboard({ session, onLogout }) {
                     <strong>{formatPrice(cartTotal)}</strong>
 
                     <button
-                      disabled={loading || deliveryDays.length === 0}
+                      disabled={
+                        loading ||
+                        deliveryDays.length === 0 ||
+                        !nextDeliveryDate
+                      }
                       onClick={createOrder}
                     >
                       Siparişi Tamamla
@@ -1059,6 +1197,101 @@ function CustomerDashboard({ session, onLogout }) {
               </div>
             )}
           </section>
+        )}
+
+        {/* ŞİFRE DEĞİŞTİRME PENCERESİ */}
+        {showPasswordModal && (
+          <div
+            className="customer-password-overlay"
+            onClick={() => {
+              if (!passwordLoading) setShowPasswordModal(false);
+            }}
+          >
+            <div
+              className="customer-password-modal"
+              onClick={event => event.stopPropagation()}
+            >
+              <div className="customer-password-heading">
+                <div>
+                  <h2>Şifre Değiştir</h2>
+                  <p>Hesabınızın şifresini güncelleyin.</p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowPasswordModal(false)}
+                  disabled={passwordLoading}
+                  aria-label="Pencereyi kapat"
+                >
+                  ×
+                </button>
+              </div>
+
+              <form onSubmit={changePassword}>
+                <label htmlFor="customer-current-password">
+                  Mevcut Şifre
+                </label>
+
+                <input
+                  id="customer-current-password"
+                  type="password"
+                  autoComplete="current-password"
+                  value={currentPassword}
+                  onChange={event => setCurrentPassword(event.target.value)}
+                  required
+                />
+
+                <label htmlFor="customer-new-password">
+                  Yeni Şifre
+                </label>
+
+                <input
+                  id="customer-new-password"
+                  type="password"
+                  autoComplete="new-password"
+                  value={newPassword}
+                  onChange={event => setNewPassword(event.target.value)}
+                  minLength={8}
+                  required
+                />
+
+                <label htmlFor="customer-confirm-password">
+                  Yeni Şifre Tekrar
+                </label>
+
+                <input
+                  id="customer-confirm-password"
+                  type="password"
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={event => setConfirmPassword(event.target.value)}
+                  minLength={8}
+                  required
+                />
+
+                <div className="customer-password-actions">
+                  <button
+                    type="button"
+                    className="customer-password-cancel"
+                    onClick={() => setShowPasswordModal(false)}
+                    disabled={passwordLoading}
+                  >
+                    Vazgeç
+                  </button>
+
+                  <button
+                    type="submit"
+                    className="customer-password-submit"
+                    disabled={passwordLoading}
+                  >
+                    {passwordLoading
+                      ? "Güncelleniyor..."
+                      : "Şifreyi Güncelle"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
         )}
       </main>
     </div>
