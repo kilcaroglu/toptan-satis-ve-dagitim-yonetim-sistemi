@@ -1,5 +1,6 @@
 
 import { useCallback, useEffect, useState } from "react";
+import { useNotification } from "../../context/NotificationContext";
 import "./AdminRoutesPage.css";
 
 const API_URL = "http://localhost:4000";
@@ -23,6 +24,8 @@ function emptySchedule() {
 }
 
 export default function AdminRoutesPage({ session }) {
+  const { askConfirm } = useNotification();
+
   const [routes, setRoutes] = useState([]);
   const [districts, setDistricts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -101,11 +104,16 @@ export default function AdminRoutesPage({ session }) {
   async function toggleDistrictDelivery(district) {
     const nextStatus = !district.delivery_available;
 
-    const confirmed = window.confirm(
-      `"${district.name}" ilçesini sevkiyata ${
+    const confirmed = await askConfirm({
+      title: nextStatus
+        ? "İlçeyi sevkiyata aç"
+        : "İlçeyi sevkiyata kapat",
+      message: `"${district.name}" ilçesini sevkiyata ${
         nextStatus ? "açmak" : "kapatmak"
       } istiyor musunuz?`,
-    );
+      confirmText: nextStatus ? "Sevkiyata Aç" : "Sevkiyata Kapat",
+      danger: !nextStatus,
+    });
 
     if (!confirmed) return;
 
@@ -331,11 +339,16 @@ export default function AdminRoutesPage({ session }) {
   }
 
   async function toggleRoute(route) {
-    const confirmed = window.confirm(
-      `"${route.name}" rotasını ${
+    const confirmed = await askConfirm({
+      title: route.active
+        ? "Rotayı pasife al"
+        : "Rotayı aktifleştir",
+      message: `"${route.name}" rotasını ${
         route.active ? "pasif" : "aktif"
       } yapmak istiyor musunuz?`,
-    );
+      confirmText: route.active ? "Pasife Al" : "Aktifleştir",
+      danger: Boolean(route.active),
+    });
 
     if (!confirmed) return;
 

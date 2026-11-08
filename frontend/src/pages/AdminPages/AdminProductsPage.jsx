@@ -1,5 +1,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNotification } from "../../context/NotificationContext";
 import "./AdminProductsPage.css";
 
 const API_URL = "http://localhost:4000";
@@ -44,6 +45,8 @@ const dateText = (value) => {
 };
 
 export default function AdminProductsPage({ session }) {
+  const { askConfirm } = useNotification();
+
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -323,13 +326,14 @@ export default function AdminProductsPage({ session }) {
   async function toggleActive(product) {
     const actionText = product.active ? "pasif" : "aktif";
 
-    if (
-      !window.confirm(
-        `"${product.name}" ürününü ${actionText} yapmak istiyor musunuz?`,
-      )
-    ) {
-      return;
-    }
+    const confirmed = await askConfirm({
+      title: "Ürün durumunu değiştir",
+      message: `"${product.name}" ürününü ${actionText} yapmak istiyor musunuz?`,
+      confirmText: product.active ? "Pasif Yap" : "Aktif Yap",
+      danger: product.active,
+    });
+
+    if (!confirmed) return;
 
     setError("");
     setMessage("");

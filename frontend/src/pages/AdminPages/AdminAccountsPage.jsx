@@ -1,5 +1,6 @@
 
 import { useCallback, useEffect, useState } from "react";
+import { useNotification } from "../../context/NotificationContext";
 import "./AdminAccountsPage.css";
 
 const API_URL = "http://localhost:4000";
@@ -11,6 +12,8 @@ function getArray(data, key) {
 }
 
 export default function AdminAccountsPage({ session }) {
+  const { askConfirm } = useNotification();
+
   const token = session?.token;
 
   const [activeTab, setActiveTab] = useState("password");
@@ -146,13 +149,14 @@ export default function AdminAccountsPage({ session }) {
       return;
     }
 
-    if (
-      !window.confirm(
-        "Seçilen müşterinin şifresini değiştirmek istediğinize emin misiniz?"
-      )
-    ) {
-      return;
-    }
+    const confirmed = await askConfirm({
+      title: "Müşteri şifresini değiştir",
+      message:
+        "Seçilen müşterinin şifresini değiştirmek istediğinize emin misiniz?",
+      confirmText: "Şifreyi Değiştir",
+    });
+
+    if (!confirmed) return;
 
     setSaving(true);
     setError("");
@@ -220,15 +224,18 @@ export default function AdminAccountsPage({ session }) {
   async function toggleAdmin(admin) {
     const nextActive = !admin.active;
 
-    const action = nextActive ? "aktif" : "pasif";
+    const confirmed = await askConfirm({
+      title: nextActive
+        ? "Yönetici hesabını aktifleştir"
+        : "Yönetici hesabını pasif yap",
+      message: `${admin.name} isimli yönetici hesabını ${
+        nextActive ? "aktif" : "pasif"
+      } yapmak istiyor musunuz?`,
+      confirmText: nextActive ? "Aktif Yap" : "Pasif Yap",
+      danger: !nextActive,
+    });
 
-    if (
-      !window.confirm(
-        `${admin.name} isimli yönetici hesabını ${action} yapmak istiyor musunuz?`
-      )
-    ) {
-      return;
-    }
+    if (!confirmed) return;
 
     setSaving(true);
     setError("");

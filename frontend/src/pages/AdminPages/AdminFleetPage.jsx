@@ -1,10 +1,13 @@
 
 import React, { useEffect, useState } from "react";
 import "./AdminFleetPage.css";
+import { useNotification } from "../../context/NotificationContext";
 
 const API_URL = "http://localhost:4000";
 
 function AdminFleetPage({ session }) {
+  const { notify, askConfirm } = useNotification();
+
   const [activeTab, setActiveTab] = useState("vehicles");
 
   const [vehicles, setVehicles] = useState([]);
@@ -17,7 +20,6 @@ function AdminFleetPage({ session }) {
   const [vehicleSearch, setVehicleSearch] = useState("");
   const [personnelSearch, setPersonnelSearch] = useState("");
 
-  // Pasif kayıtları gösterme ayarları
   const [showInactiveVehicles, setShowInactiveVehicles] = useState(false);
   const [showInactivePersonnel, setShowInactivePersonnel] = useState(false);
 
@@ -46,7 +48,6 @@ function AdminFleetPage({ session }) {
   const [vehicleForm, setVehicleForm] = useState(emptyVehicle);
   const [personnelForm, setPersonnelForm] = useState(emptyPersonnel);
 
-  // API istekleri
   const request = async (endpoint, options = {}) => {
     const response = await fetch(`${API_URL}${endpoint}`, {
       ...options,
@@ -66,7 +67,6 @@ function AdminFleetPage({ session }) {
     return data;
   };
 
-  // Araç ve personel listesini getir
   const loadData = async () => {
     try {
       setLoading(true);
@@ -150,19 +150,22 @@ function AdminFleetPage({ session }) {
         });
       }
 
+      const wasEditing = Boolean(editingVehicle);
+
       setShowVehicleModal(false);
       setVehicleForm({ ...emptyVehicle });
       setEditingVehicle(null);
 
       await loadData();
 
-      alert(
-        editingVehicle
+      notify(
+        wasEditing
           ? "Araç bilgileri güncellendi."
-          : "Araç başarıyla eklendi."
+          : "Araç başarıyla eklendi.",
+        "success"
       );
     } catch (err) {
-      alert(err.message);
+      notify(err.message, "error");
     } finally {
       setSaving(false);
     }
@@ -170,11 +173,14 @@ function AdminFleetPage({ session }) {
 
   // Araç aktif / pasif
   const toggleVehicleActive = async (vehicle) => {
-    const confirmed = window.confirm(
-      vehicle.active
-        ? "Bu aracı pasif yapmak istediğinize emin misiniz?"
-        : "Bu aracı aktif yapmak istediğinize emin misiniz?"
-    );
+    const confirmed = await askConfirm({
+      title: vehicle.active ? "Aracı Pasif Yap" : "Aracı Aktif Yap",
+      message: vehicle.active
+        ? `${vehicle.plate} plakalı aracı pasif yapmak istediğinize emin misiniz?`
+        : `${vehicle.plate} plakalı aracı yeniden aktif yapmak istiyor musunuz?`,
+      confirmText: vehicle.active ? "Pasif Yap" : "Aktif Yap",
+      danger: vehicle.active,
+    });
 
     if (!confirmed) return;
 
@@ -187,8 +193,15 @@ function AdminFleetPage({ session }) {
       });
 
       await loadData();
+
+      notify(
+        vehicle.active
+          ? "Araç pasif hale getirildi."
+          : "Araç aktif hale getirildi.",
+        "success"
+      );
     } catch (err) {
-      alert(err.message);
+      notify(err.message, "error");
     }
   };
 
@@ -229,9 +242,9 @@ function AdminFleetPage({ session }) {
 
       await loadData();
 
-      alert("Personel başarıyla eklendi.");
+      notify("Personel başarıyla eklendi.", "success");
     } catch (err) {
-      alert(err.message);
+      notify(err.message, "error");
     } finally {
       setSaving(false);
     }
@@ -239,11 +252,14 @@ function AdminFleetPage({ session }) {
 
   // Personel aktif / pasif
   const togglePersonnelActive = async (person) => {
-    const confirmed = window.confirm(
-      person.active
+    const confirmed = await askConfirm({
+      title: person.active ? "Personeli Pasif Yap" : "Personeli Aktif Yap",
+      message: person.active
         ? `${person.name} isimli personeli pasif yapmak istiyor musunuz?`
-        : `${person.name} isimli personeli aktif yapmak istiyor musunuz?`
-    );
+        : `${person.name} isimli personeli yeniden aktif yapmak istiyor musunuz?`,
+      confirmText: person.active ? "Pasif Yap" : "Aktif Yap",
+      danger: person.active,
+    });
 
     if (!confirmed) return;
 
@@ -257,13 +273,14 @@ function AdminFleetPage({ session }) {
 
       await loadData();
 
-      alert(
+      notify(
         person.active
           ? "Personel pasif hale getirildi."
-          : "Personel aktif hale getirildi."
+          : "Personel aktif hale getirildi.",
+        "success"
       );
     } catch (err) {
-      alert(err.message);
+      notify(err.message, "error");
     }
   };
 

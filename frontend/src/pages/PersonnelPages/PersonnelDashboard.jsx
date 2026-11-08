@@ -1,5 +1,6 @@
 
 import { useEffect, useRef, useState } from "react";
+import { useNotification } from "../../context/NotificationContext";
 import "./PersonnelDashboard.css";
 
 const API_URL = "http://localhost:4000";
@@ -45,6 +46,8 @@ function formatAmount(amount) {
 }
 
 function PersonnelDashboard({ session, onLogout }) {
+  const { askConfirm } = useNotification();
+
   const [shipments, setShipments] = useState([]);
   const [selectedShipment, setSelectedShipment] = useState(null);
   const [orders, setOrders] = useState([]);
@@ -258,9 +261,11 @@ function PersonnelDashboard({ session, onLogout }) {
   }
 
   async function markOrderOnTheWay(order) {
-    const confirmed = window.confirm(
-      `${order.company_name} müşterisinin siparişini yola çıktı olarak işaretlemek istiyor musunuz?`,
-    );
+    const confirmed = await askConfirm({
+      title: "Siparişi yola çıkar",
+      message: `${order.company_name} müşterisinin siparişini yola çıktı olarak işaretlemek istiyor musunuz?`,
+      confirmText: "Yola Çıktı",
+    });
 
     if (!confirmed) return;
 
@@ -306,9 +311,11 @@ function PersonnelDashboard({ session, onLogout }) {
   }
 
   async function completeOrder(order) {
-    const confirmed = window.confirm(
-      `${order.company_name} müşterisinin siparişini teslim edildi olarak işaretlemek istiyor musunuz?`,
-    );
+    const confirmed = await askConfirm({
+      title: "Siparişi teslim et",
+      message: `${order.company_name} müşterisinin siparişini teslim edildi olarak işaretlemek istiyor musunuz?`,
+      confirmText: "Teslim Edildi",
+    });
 
     if (!confirmed) return;
 

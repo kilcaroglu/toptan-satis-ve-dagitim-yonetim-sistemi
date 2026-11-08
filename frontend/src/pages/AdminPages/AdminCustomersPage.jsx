@@ -1,6 +1,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import "./AdminCustomersPage.css";
+import { useNotification } from "../../context/NotificationContext";
 
 const API_URL = "http://localhost:4000";
 
@@ -28,6 +29,7 @@ const getErrorMessage = (data, fallback) =>
   data?.message || fallback;
 
 export default function AdminCustomersPage({ session }) {
+  const { notify, askConfirm } = useNotification();
   const token = session?.token;
 
   const [customers, setCustomers] = useState([]);
@@ -141,6 +143,7 @@ export default function AdminCustomersPage({ session }) {
       setTransactions(data.transactions || []);
     } catch (err) {
       setMessage(err.message);
+      notify(err.message, "error");
     } finally {
       setDetailLoading(false);
     }
@@ -184,6 +187,7 @@ export default function AdminCustomersPage({ session }) {
       }
     } catch (err) {
       setMessage(err.message);
+      notify(err.message, "error");
     }
   };
 
@@ -230,7 +234,6 @@ export default function AdminCustomersPage({ session }) {
     (sum, customer) => sum + Number(customer.total_payment || 0),
     0
   );
-
 
   const openEditCustomer = (customer) => {
     setEditingCustomer(customer);
@@ -333,13 +336,15 @@ export default function AdminCustomersPage({ session }) {
         setSelectedCustomer(updatedCustomer);
       }
 
-      alert(
+      notify(
         isEditing
           ? "Müşteri bilgileri güncellendi."
-          : "Yeni müşteri başarıyla eklendi."
+          : "Yeni müşteri başarıyla eklendi.",
+        "success"
       );
     } catch (err) {
       setMessage(err.message);
+      notify(err.message, "error");
     } finally {
       setSaving(false);
     }
@@ -348,13 +353,14 @@ export default function AdminCustomersPage({ session }) {
   const toggleCustomerStatus = async (customer) => {
     const actionText = customer.active ? "pasif" : "aktif";
 
-    if (
-      !window.confirm(
-        `${customer.company_name} müşterisini ${actionText} yapmak istiyor musunuz?`
-      )
-    ) {
-      return;
-    }
+    const confirmed = await askConfirm({
+      title: customer.active ? "Müşteriyi Pasif Yap" : "Müşteriyi Aktif Yap",
+      message: `${customer.company_name} müşterisini ${actionText} yapmak istiyor musunuz?`,
+      confirmText: customer.active ? "Pasif Yap" : "Aktif Yap",
+      danger: customer.active,
+    });
+
+    if (!confirmed) return;
 
     try {
       const response = await fetch(
@@ -381,8 +387,16 @@ export default function AdminCustomersPage({ session }) {
           ...data,
         }));
       }
+
+      notify(
+        customer.active
+          ? "Müşteri pasif hale getirildi."
+          : "Müşteri aktif hale getirildi.",
+        "success"
+      );
     } catch (err) {
       setError(err.message);
+      notify(err.message, "error");
     }
   };
 
@@ -467,14 +481,16 @@ export default function AdminCustomersPage({ session }) {
 
       await refreshSelectedCustomer();
 
-      alert(
+      notify(
         data.message ||
           (isDebit
             ? "Borç kaydedildi."
-            : "Tahsilat kaydedildi.")
+            : "Tahsilat kaydedildi."),
+        "success"
       );
     } catch (err) {
       setMessage(err.message);
+      notify(err.message, "error");
     } finally {
       setSaving(false);
     }

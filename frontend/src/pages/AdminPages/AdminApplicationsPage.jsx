@@ -1,4 +1,6 @@
+
 import { useCallback, useEffect, useState } from "react";
+import { useNotification } from "../../context/NotificationContext";
 import "./AdminApplicationsPage.css";
 
 const API_URL = "http://localhost:4000";
@@ -11,6 +13,8 @@ const statusLabels = {
 };
 
 export default function AdminApplicationsPage({ session }) {
+  const { notify } = useNotification();
+
   const [applications, setApplications] = useState([]);
   const [filter, setFilter] = useState("ALL");
   const [loading, setLoading] = useState(true);
@@ -148,7 +152,7 @@ export default function AdminApplicationsPage({ session }) {
 
       await loadApplications();
 
-      alert(data.message || "İşlem başarılı.");
+      notify(data.message || "İşlem başarılı.", "success");
     } catch (err) {
       setMessage(err.message);
     } finally {

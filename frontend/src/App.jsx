@@ -1,5 +1,7 @@
 
 import { useEffect, useState } from "react";
+import { NotificationProvider } from "./context/NotificationContext";
+
 import LoginPage from "./pages/LoginPages/LoginPage";
 import ApplicationPage from "./pages/AdminPages/ApplicationPage";
 import ApplicationStatusPage from "./pages/AdminPages/ApplicationStatusPage";
@@ -33,7 +35,7 @@ function getSavedSession() {
   }
 }
 
-function App() {
+function AppContent() {
   const [session, setSession] = useState(getSavedSession);
 
   const [currentPage, setCurrentPage] = useState(() =>
@@ -46,7 +48,6 @@ function App() {
 
   const [applicationNumber, setApplicationNumber] = useState("");
 
-  // Uygulama açıldığında kayıtlı tokenın geçerliliğini kontrol et.
   useEffect(() => {
     async function validateSession() {
       const savedSession = getSavedSession();
@@ -93,7 +94,6 @@ function App() {
         setSession(validSession);
         setCurrentPage("dashboard");
       } catch (error) {
-        // Sunucuya ulaşılamaması durumunda tokenı silme.
         console.error("Oturum kontrolü yapılamadı:", error);
       } finally {
         setCheckingSession(false);
@@ -126,7 +126,6 @@ function App() {
     setCurrentPage("login");
   }
 
-  // Token kontrolü tamamlanmadan ekranları gösterme.
   if (checkingSession) {
     return (
       <main
@@ -223,6 +222,14 @@ function App() {
         setCurrentPage("application-status");
       }}
     />
+  );
+}
+
+function App() {
+  return (
+    <NotificationProvider>
+      <AppContent />
+    </NotificationProvider>
   );
 }
 

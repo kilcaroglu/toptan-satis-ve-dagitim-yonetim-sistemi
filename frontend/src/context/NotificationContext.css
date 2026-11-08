@@ -1,0 +1,228 @@
+
+/* Bildirim kutusu */
+.app-toast {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: max-content;
+  max-width: min(420px, calc(100vw - 32px));
+  padding: 15px 18px;
+  border: 1px solid #dce1e7;
+  border-left: 4px solid #71839a;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #303b49;
+  box-shadow: 0 6px 22px rgba(35, 48, 62, 0.10);
+  font-size: 14px;
+  animation: toast-show 0.25s ease-out;
+}
+
+.app-toast.success {
+  border-left-color: #71839a;
+}
+
+.app-toast.error {
+  border-left-color: #71839a;
+}
+
+.app-toast.warning {
+  border-left-color: #71839a;
+}
+
+.app-toast-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: #edf1f5;
+  color: #354c68;
+  font-weight: 700;
+}
+
+.app-toast.error .app-toast-icon,
+.app-toast.warning .app-toast-icon,
+.app-toast.success .app-toast-icon {
+  background: #edf1f5;
+  color: #354c68;
+}
+
+.app-toast-close {
+  margin-left: 8px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #596575;
+  font-size: 21px;
+  cursor: pointer;
+}
+
+/* Onay penceresi */
+.app-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(35, 45, 58, 0.42);
+  animation: overlay-show 0.2s ease-out;
+}
+
+.app-confirm-dialog {
+  width: 100%;
+  max-width: 400px;
+  padding: 28px;
+  border: 1px solid #dfe4ea;
+  border-radius: 11px;
+  background: #ffffff;
+  text-align: center;
+  box-shadow: 0 12px 38px rgba(30, 43, 58, 0.15);
+  animation: dialog-show 0.2s ease-out;
+}
+
+.app-confirm-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 16px;
+  border-radius: 9px;
+  background: #edf1f5;
+  color: #354c68;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.app-confirm-dialog h3 {
+  margin: 0 0 10px;
+  color: #263445;
+  font-size: 19px;
+  font-weight: 650;
+}
+
+.app-confirm-dialog p {
+  margin: 0;
+  color: #505d6c;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.app-confirm-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 25px;
+}
+
+.app-confirm-actions button {
+  min-width: 110px;
+  padding: 11px 18px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+/* Vazgeç: gri */
+.app-confirm-cancel {
+  border-color: #d9dee5 !important;
+  background: #e9edf1;
+  color: #354052;
+}
+
+.app-confirm-cancel:hover {
+  background: #dce2e9;
+}
+
+/* Onayla: lacivert */
+.app-confirm-submit {
+  border-color: #354c68;
+  background: #354c68;
+  color: #ffffff;
+}
+
+.app-confirm-submit:hover {
+  border-color: #293e57;
+  background: #293e57;
+}
+
+/* Riskli işlemler: aynı lacivert ton */
+.app-confirm-submit.danger {
+  border-color: #354c68;
+  background: #354c68;
+  color: #ffffff;
+}
+
+.app-confirm-submit.danger:hover {
+  border-color: #293e57;
+  background: #293e57;
+}
+
+.app-confirm-actions button:focus-visible,
+.app-toast-close:focus-visible {
+  outline: 2px solid #8293a8;
+  outline-offset: 3px;
+}
+
+/* Animasyonlar */
+@keyframes toast-show {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes overlay-show {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes dialog-show {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Mobil uyumluluk */
+@media (max-width: 600px) {
+  .app-toast {
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    width: auto;
+    max-width: none;
+  }
+
+  .app-confirm-dialog {
+    padding: 24px 20px;
+  }
+
+  .app-confirm-actions button {
+    flex: 1;
+    min-width: 0;
+  }
+}

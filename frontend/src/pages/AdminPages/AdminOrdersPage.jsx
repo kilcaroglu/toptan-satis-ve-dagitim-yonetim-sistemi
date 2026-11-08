@@ -1,5 +1,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNotification } from "../../context/NotificationContext";
 import "./AdminOrdersPage.css";
 
 const API_URL = "http://localhost:4000";
@@ -98,11 +99,14 @@ function routeContainsDistrict(route, districtId) {
     : [];
 
   return districts.some(
-    (district) => Number(district.id ?? district.district_id) === Number(districtId)
+    (district) =>
+      Number(district.id ?? district.district_id) === Number(districtId)
   );
 }
 
 export default function AdminOrdersPage({ session }) {
+  const { askConfirm } = useNotification();
+
   const token = session?.token;
 
   const [orders, setOrders] = useState([]);
@@ -120,7 +124,9 @@ export default function AdminOrdersPage({ session }) {
   const [statusFilter, setStatusFilter] = useState("all");
   const [sourceFilter, setSourceFilter] = useState("all");
   const [weekStart, setWeekStart] = useState(() => getWeekStart(new Date()));
-  const [selectedDay, setSelectedDay] = useState(() => localDateKey(new Date()));
+  const [selectedDay, setSelectedDay] = useState(() =>
+    localDateKey(new Date())
+  );
 
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -175,14 +181,19 @@ export default function AdminOrdersPage({ session }) {
     setError("");
 
     try {
-      const [ordersData, customersData, productsData, shipmentsData, routesData] =
-        await Promise.all([
-          request("/orders"),
-          request("/customers"),
-          request("/products"),
-          request("/shipments"),
-          request("/routes"),
-        ]);
+      const [
+        ordersData,
+        customersData,
+        productsData,
+        shipmentsData,
+        routesData,
+      ] = await Promise.all([
+        request("/orders"),
+        request("/customers"),
+        request("/products"),
+        request("/shipments"),
+        request("/routes"),
+      ]);
 
       setOrders(getArray(ordersData, "orders"));
       setCustomers(getArray(customersData, "customers"));
@@ -208,6 +219,7 @@ export default function AdminOrdersPage({ session }) {
   const weekOrders = useMemo(() => {
     const startKey = localDateKey(weekStart);
     const endKey = localDateKey(addDays(weekStart, 6));
+
     return orders.filter((order) => {
       const key = dateKey(order.shipment_date);
       return key >= startKey && key <= endKey;
@@ -220,6 +232,7 @@ export default function AdminOrdersPage({ session }) {
     return [...orders]
       .filter((order) => {
         const matchesDay = dateKey(order.shipment_date) === selectedDay;
+
         const matchesSearch =
           !searchText ||
           String(order.id).includes(searchText) ||
@@ -239,25 +252,38 @@ export default function AdminOrdersPage({ session }) {
           (sourceFilter === "CUSTOMER" &&
             (order.order_source || "CUSTOMER") === "CUSTOMER");
 
-        return matchesDay && matchesSearch && matchesStatus && matchesSource;
+        return (
+          matchesDay &&
+          matchesSearch &&
+          matchesStatus &&
+          matchesSource
+        );
       })
       .sort((a, b) => {
         const dateCompare = String(b.created_at || "").localeCompare(
           String(a.created_at || "")
         );
+
         return dateCompare || Number(b.id) - Number(a.id);
       });
   }, [orders, selectedDay, search, statusFilter, sourceFilter]);
 
   const routeGroups = useMemo(() => {
     const groups = new Map();
+
     filteredOrders.forEach((order) => {
       const routeName = order.route_name || "Rota Atanmamış";
+
       if (!groups.has(routeName)) groups.set(routeName, []);
+
       groups.get(routeName).push(order);
     });
+
     return [...groups.entries()]
-      .map(([routeName, routeOrders]) => ({ routeName, orders: routeOrders }))
+      .map(([routeName, routeOrders]) => ({
+        routeName,
+        orders: routeOrders,
+      }))
       .sort((a, b) => a.routeName.localeCompare(b.routeName, "tr"));
   }, [filteredOrders]);
 
@@ -266,7 +292,6 @@ export default function AdminOrdersPage({ session }) {
     setWeekStart(nextWeek);
     setSelectedDay(localDateKey(nextWeek));
   }
-
 
   const totalAmount = useMemo(
     () =>
@@ -356,13 +381,14 @@ export default function AdminOrdersPage({ session }) {
   async function changeStatus(order, nextStatus) {
     const label = statusLabels[nextStatus];
 
-    if (
-      !window.confirm(
-        `#${order.id} numaralı siparişin durumunu "${label}" yapmak istiyor musunuz?`
-      )
-    ) {
-      return;
-    }
+    const confirmed = await askConfirm({
+      title: "Sipariş durumunu değiştir",
+      message: `#${order.id} numaralı siparişin durumunu "${label}" yapmak istiyor musunuz?`,
+      confirmText: "Durumu Değiştir",
+      danger: nextStatus === "CANCELLED",
+    });
+
+    if (!confirmed) return;
 
     setSaving(true);
     setError("");
@@ -379,8 +405,7 @@ export default function AdminOrdersPage({ session }) {
       await loadData();
 
       if (selectedOrder?.id === order.id) {
-        const updated = orders.find((item) => item.id === order.id);
-        setSelectedOrder(updated ? { ...updated, status: nextStatus } : order);
+        setSelectedOrder({ ...order, status: nextStatus });
       }
     } catch (err) {
       setError(err.message || "Sipariş durumu değiştirilemedi.");
@@ -393,26 +418,30 @@ export default function AdminOrdersPage({ session }) {
     const eligibleOrders = routeOrders.filter((order) =>
       (statusTransitions[order.status] || []).includes(nextStatus)
     );
+
     if (!eligibleOrders.length) return;
 
     const label = statusLabels[nextStatus];
     const routeName = routeOrders[0]?.route_name || "Rota Atanmamış";
     const excludedCount = routeOrders.length - eligibleOrders.length;
+
     const detail = excludedCount
       ? `\n\nDurumu uygun olmadığı için ${excludedCount} sipariş değiştirilmeyecek.`
       : "";
 
-    if (
-      !window.confirm(
-        `${routeName} rotasındaki ${eligibleOrders.length} siparişin durumunu \"${label}\" yapmak istiyor musunuz?${detail}`
-      )
-    ) {
-      return;
-    }
+    const confirmed = await askConfirm({
+      title: "Toplu sipariş durumu değişikliği",
+      message: `${routeName} rotasındaki ${eligibleOrders.length} siparişin durumunu "${label}" yapmak istiyor musunuz?${detail}`,
+      confirmText: "Siparişleri Güncelle",
+      danger: nextStatus === "CANCELLED",
+    });
+
+    if (!confirmed) return;
 
     setSaving(true);
     setError("");
     setMessage("");
+
     let successCount = 0;
     const failedOrders = [];
 
@@ -424,6 +453,7 @@ export default function AdminOrdersPage({ session }) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ status: nextStatus }),
           });
+
           successCount += 1;
         } catch (err) {
           failedOrders.push(`#${order.id}: ${err.message}`);
@@ -431,13 +461,14 @@ export default function AdminOrdersPage({ session }) {
       }
 
       await loadData();
+
       if (failedOrders.length) {
         setError(
           `${successCount} sipariş güncellendi. Güncellenemeyenler: ${failedOrders.join("; ")}`
         );
       } else {
         setMessage(
-          `${routeName} rotasındaki ${successCount} sipariş \"${label}\" durumuna alındı.`
+          `${routeName} rotasındaki ${successCount} sipariş "${label}" durumuna alındı.`
         );
       }
     } finally {
@@ -478,13 +509,14 @@ export default function AdminOrdersPage({ session }) {
   }
 
   async function deleteOrderItem(item) {
-    if (
-      !window.confirm(
-        `"${item.product_name}" ürününü siparişten silmek istiyor musunuz?`
-      )
-    ) {
-      return;
-    }
+    const confirmed = await askConfirm({
+      title: "Siparişten ürün sil",
+      message: `"${item.product_name}" ürününü siparişten silmek istiyor musunuz?`,
+      confirmText: "Ürünü Sil",
+      danger: true,
+    });
+
+    if (!confirmed) return;
 
     setSaving(true);
     setError("");
@@ -695,7 +727,8 @@ export default function AdminOrdersPage({ session }) {
   }
 
   const selectedOrderTotal = orderItems.reduce(
-    (sum, item) => sum + Number(item.quantity) * Number(item.unit_price),
+    (sum, item) =>
+      sum + Number(item.quantity) * Number(item.unit_price),
     0
   );
 
@@ -772,7 +805,9 @@ export default function AdminOrdersPage({ session }) {
             setWeekStart(currentWeek);
             setSelectedDay(localDateKey(new Date()));
           }}
-        >Bu Hafta</button>
+        >
+          Bu Hafta
+        </button>
       </div>
 
       <div className="orders-day-tabs">
@@ -781,6 +816,7 @@ export default function AdminOrdersPage({ session }) {
           const count = weekOrders.filter(
             (order) => dateKey(order.shipment_date) === key
           ).length;
+
           return (
             <button
               type="button"
@@ -798,7 +834,13 @@ export default function AdminOrdersPage({ session }) {
 
       <div className="orders-selected-day-heading">
         <div>
-          <h3>{new Date(`${selectedDay}T12:00:00`).toLocaleDateString("tr-TR", { weekday: "long", day: "numeric", month: "long" })}</h3>
+          <h3>
+            {new Date(`${selectedDay}T12:00:00`).toLocaleDateString("tr-TR", {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+            })}
+          </h3>
           <p>Siparişler teslimat rotalarına göre gruplandırılmıştır.</p>
         </div>
         <span>{filteredOrders.length} sipariş · {routeGroups.length} rota</span>
@@ -811,6 +853,7 @@ export default function AdminOrdersPage({ session }) {
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
+
         <select
           value={statusFilter}
           onChange={(event) => setStatusFilter(event.target.value)}
@@ -820,6 +863,7 @@ export default function AdminOrdersPage({ session }) {
             <option key={value} value={value}>{label}</option>
           ))}
         </select>
+
         <select
           value={sourceFilter}
           onChange={(event) => setSourceFilter(event.target.value)}
@@ -828,6 +872,7 @@ export default function AdminOrdersPage({ session }) {
           <option value="CUSTOMER">Müşteri siparişleri</option>
           <option value="ADMIN">Admin siparişleri</option>
         </select>
+
         <button
           type="button"
           className="orders-clear-button"
@@ -836,20 +881,27 @@ export default function AdminOrdersPage({ session }) {
             setStatusFilter("all");
             setSourceFilter("all");
           }}
-        >Filtreleri Temizle</button>
+        >
+          Filtreleri Temizle
+        </button>
       </div>
 
       {loading ? (
         <div className="orders-empty">Siparişler yükleniyor...</div>
       ) : filteredOrders.length === 0 ? (
-        <div className="orders-empty">Seçilen gün ve filtreler için sipariş bulunamadı.</div>
+        <div className="orders-empty">
+          Seçilen gün ve filtreler için sipariş bulunamadı.
+        </div>
       ) : (
         <div className="orders-route-list">
           {routeGroups.map((group) => {
             const routeTotal = group.orders.reduce(
-              (sum, order) => sum + Number(order.total_amount || 0), 0
+              (sum, order) => sum + Number(order.total_amount || 0),
+              0
             );
+
             const actionCounts = {};
+
             group.orders.forEach((order) => {
               (statusTransitions[order.status] || []).forEach((target) => {
                 if (target !== "CANCELLED") {
@@ -865,6 +917,7 @@ export default function AdminOrdersPage({ session }) {
                     <span className="orders-route-eyebrow">TESLİMAT ROTASI</span>
                     <h3>{group.routeName}</h3>
                   </div>
+
                   <div className="orders-route-totals">
                     <strong>{group.orders.length} sipariş</strong>
                     <span>{money(routeTotal)}</span>
@@ -879,9 +932,13 @@ export default function AdminOrdersPage({ session }) {
                         type="button"
                         key={target}
                         disabled={saving}
-                        onClick={() => changeRouteOrdersStatus(group.orders, target)}
+                        onClick={() =>
+                          changeRouteOrdersStatus(group.orders, target)
+                        }
                       >
-                        {target === "APPROVED" ? "Onayla" : statusLabels[target]} ({count})
+                        {target === "APPROVED"
+                          ? "Onayla"
+                          : statusLabels[target]} ({count})
                       </button>
                     ))}
                   </div>
@@ -900,29 +957,51 @@ export default function AdminOrdersPage({ session }) {
                         <th>İşlemler</th>
                       </tr>
                     </thead>
+
                     <tbody>
                       {group.orders.map((order) => (
                         <tr key={order.id}>
                           <td><strong>#{order.id}</strong></td>
                           <td>
                             <strong>{order.company_name || "-"}</strong>
-                            {order.contact_name && <small className="orders-subtext">{order.contact_name}</small>}
+                            {order.contact_name && (
+                              <small className="orders-subtext">
+                                {order.contact_name}
+                              </small>
+                            )}
                           </td>
                           <td>{dateTimeText(order.created_at)}</td>
                           <td>
-                            <span className={`orders-source ${order.order_source === "ADMIN" ? "admin" : "customer"}`}>
-                              {order.order_source === "ADMIN" ? "Admin" : "Müşteri"}
+                            <span
+                              className={`orders-source ${
+                                order.order_source === "ADMIN"
+                                  ? "admin"
+                                  : "customer"
+                              }`}
+                            >
+                              {order.order_source === "ADMIN"
+                                ? "Admin"
+                                : "Müşteri"}
                             </span>
                           </td>
                           <td><strong>{money(order.total_amount)}</strong></td>
                           <td>
-                            <span className={`orders-status ${String(order.status || "").toLowerCase()}`}>
+                            <span
+                              className={`orders-status ${String(
+                                order.status || ""
+                              ).toLowerCase()}`}
+                            >
                               {statusLabels[order.status] || order.status}
                             </span>
                           </td>
                           <td>
                             <div className="orders-row-actions">
-                              <button type="button" onClick={() => openDetails(order)}>Detay</button>
+                              <button
+                                type="button"
+                                onClick={() => openDetails(order)}
+                              >
+                                Detay
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -996,7 +1075,9 @@ export default function AdminOrdersPage({ session }) {
                   className="orders-add-small-button"
                   onClick={() => setAddingProduct((value) => !value)}
                 >
-                  {addingProduct ? "Ürün Ekleme Alanını Kapat" : "+ Ürün Ekle"}
+                  {addingProduct
+                    ? "Ürün Ekleme Alanını Kapat"
+                    : "+ Ürün Ekle"}
                 </button>
               )}
             </div>
@@ -1260,10 +1341,7 @@ export default function AdminOrdersPage({ session }) {
                 placeholder="Miktar"
               />
 
-              <button
-                type="button"
-                onClick={addProductToNewOrder}
-              >
+              <button type="button" onClick={addProductToNewOrder}>
                 Ekle
               </button>
             </div>
